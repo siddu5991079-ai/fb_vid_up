@@ -233,7 +233,7 @@ def worker_2_edit_video(dynamic_vid, static_vid, custom_audio, output_vid):
         def blur(frame):
             return np.array(Image.fromarray(frame).filter(ImageFilter.GaussianBlur(30)))
 
-        print("[*] Applying Gaussian Blur (Radius: 30) to dynamic clip...")
+        print("[*] Applying Gaussian Blur (Radius: 20) to dynamic clip...")
         dyn_clip = dyn_clip.fl_image(blur)
         
         print("[*] Concatenating (Merging) dynamic and static clips...")
