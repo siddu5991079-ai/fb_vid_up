@@ -58,39 +58,92 @@ END_TIME_LIMIT = (5 * 60 * 60) + (50 * 60)
 # ==========================================
 # 🧠 ANTI-SPAM (SPINTAX) GENERATOR
 # ==========================================
+
+# ==========================================
+# 🧠 ANTI-SPAM (SPINTAX) GENERATOR (UPDATED)
+# ==========================================
 def generate_unique_metadata(clip_number):
     print(f"\n[🧠] Generating Unique Metadata (Spintax) for Clip #{clip_number}...")
+    
+    # 1. Hashtags Shuffle
     tags_list = HASHTAGS.split()
     random.shuffle(tags_list)
     shuffled_tags = " ".join(tags_list)
     
+    # 2. Dynamic Title Generator (NO EMOJIS, Team A vs Team B FIRST)
+    # Yeh words har dafa aagay peechay honge taake title naya lagay
+    title_buzzwords = ["Live Action", "Today Match", "Exclusive", "Highlights", "Full Coverage", "Stream"]
+    random.shuffle(title_buzzwords)
+    dynamic_suffix = " | ".join(title_buzzwords[:2]) # Koi se 2 random words utha kar jor dega
+    
+    # Title Hamesha MATCH_TITLE (Team A vs Team B) se shuru hoga
+    chosen_title = f"{MATCH_TITLE} - {dynamic_suffix}"
+    
+    # ✂️ THE SMART TRIMMER (Facebook API Byte Limit Fix - 100 Chars)
+    if len(chosen_title) > 240:
+        print(f"[⚠️] Title lamba tha. Safe size par trim kar raha hoon...")
+        chosen_title = chosen_title[:97] + "..."
+        
+    # 3. Emojis (Sirf Description ke liye)
     emojis = ["🔥", "🏏", "⚡", "🏆", "💥", "😱", "📺", "🚀"]
     emo = random.sample(emojis, 3) 
     current_time = datetime.now(PKT).strftime("%I:%M %p")
     
-    titles = [
-        f"🔴 LIVE: {MATCH_TITLE} {emo[0]}",
-        f"{emo[1]} EXCLUSIVE HIGHLIGHT: {MATCH_TITLE}",
-        f"⚡ {MATCH_TITLE} - Best Moment {emo[2]}"
-    ]
-    
+    # 4. Description Generator
+    # Rule Followed: Start with Exact Title -> Emojis -> Description Body
     descriptions = [
-        f"{MATCH_DESC}\n\n⏱️ Update: {current_time} | Clip #{clip_number}\n\n👇 Watch Full Match Link in First Comment!\n\n{shuffled_tags}",
-        f"Current match situation! {emo[1]}\n\n{shuffled_tags}\n\n{MATCH_DESC}\n\n🎥 Frame: {clip_number} (Time: {current_time})\nCheck comments for 0 buffering stream link! 👇"
+        f"{chosen_title} {emo[0]} {emo[1]}\n\n{MATCH_DESC}\n\n⏱️ Update: {current_time} | Clip #{clip_number}\n\n👇 Watch Full Match Link in First Comment!\n\n{shuffled_tags}",
+        f"{chosen_title} {emo[2]} {emo[0]}\n\n{shuffled_tags}\n\n{MATCH_DESC}\n\n🎥 Frame: {clip_number} (Time: {current_time})\nCheck comments for 0 buffering stream link! 👇"
     ]
     
-    chosen_title = random.choice(titles)
     chosen_desc = random.choice(descriptions)
     
-    # ✂️ THE SMART TRIMMER (Facebook API Byte Limit Fix)
-    if len(chosen_title) > 240:
-        print(f"[⚠️] Title lamba tha. Facebook ke byte-limit ke liye safe size par trim kar raha hoon...")
-        # 97 characters tak rakho aur aagay 3 dots lagao
-        chosen_title = chosen_title[:97] + "..."
-        
-    print(f"  --> Selected Title: {chosen_title}")
-    print(f"  --> Emojis Used: {emo}")
+    print(f"  --> Selected Title (No Emojis): {chosen_title}")
+    print(f"  --> Emojis Used in Desc: {emo}")
     return chosen_title, chosen_desc
+
+
+
+
+
+
+
+
+# ================
+
+# def generate_unique_metadata(clip_number):
+#     print(f"\n[🧠] Generating Unique Metadata (Spintax) for Clip #{clip_number}...")
+#     tags_list = HASHTAGS.split()
+#     random.shuffle(tags_list)
+#     shuffled_tags = " ".join(tags_list)
+    
+#     emojis = ["🔥", "🏏", "⚡", "🏆", "💥", "😱", "📺", "🚀"]
+#     emo = random.sample(emojis, 3) 
+#     current_time = datetime.now(PKT).strftime("%I:%M %p")
+    
+#     titles = [
+#         f"🔴 LIVE: {MATCH_TITLE} {emo[0]}",
+#         f"{emo[1]} EXCLUSIVE HIGHLIGHT: {MATCH_TITLE}",
+#         f"⚡ {MATCH_TITLE} - Best Moment {emo[2]}"
+#     ]
+    
+#     descriptions = [
+#         f"{MATCH_DESC}\n\n⏱️ Update: {current_time} | Clip #{clip_number}\n\n👇 Watch Full Match Link in First Comment!\n\n{shuffled_tags}",
+#         f"Current match situation! {emo[1]}\n\n{shuffled_tags}\n\n{MATCH_DESC}\n\n🎥 Frame: {clip_number} (Time: {current_time})\nCheck comments for 0 buffering stream link! 👇"
+#     ]
+    
+#     chosen_title = random.choice(titles)
+#     chosen_desc = random.choice(descriptions)
+    
+#     # ✂️ THE SMART TRIMMER (Facebook API Byte Limit Fix)
+#     if len(chosen_title) > 240:
+#         print(f"[⚠️] Title lamba tha. Facebook ke byte-limit ke liye safe size par trim kar raha hoon...")
+#         # 97 characters tak rakho aur aagay 3 dots lagao
+#         chosen_title = chosen_title[:97] + "..."
+        
+#     print(f"  --> Selected Title: {chosen_title}")
+#     print(f"  --> Emojis Used: {emo}")
+#     return chosen_title, chosen_desc
 
 # ==========================================
 # 🔄 RELAY RACE (AUTO RESTART)
