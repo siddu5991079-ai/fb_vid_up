@@ -184,6 +184,10 @@ def worker_2_edit_video(dynamic_vid, static_vid, custom_audio, output_vid):
 # ==========================================
 # WORKER 3: FACEBOOK UPLOAD & COMMENT
 # ==========================================
+
+# ==========================================
+# WORKER 3: FACEBOOK UPLOAD & COMMENT WITH IMAGE
+# ==========================================
 def worker_3_upload(video_path, page_id, clip_number):
     print(f"[📤 Worker 3] Facebook par Video post ki ja rahi hai...")
     url = f"https://graph-video.facebook.com/v18.0/{page_id}/videos"
@@ -197,15 +201,57 @@ def worker_3_upload(video_path, page_id, clip_number):
         if "id" in res:
             print(f"[✅ Worker 3] Video Upload SUCCESS! (ID: {res['id']})")
             
-            # Commenting
-            time.sleep(10) # Video process hone ka chota sa wait
+            # --- COMMENT WITH IMAGE LOGIC ---
+            time.sleep(15) # Video processing ke liye thora aur wait (15 sec)
+            print("[💬 Worker 3] Comment mein Photo aur Link upload ho raha hai...")
+            
             comment_url = f"https://graph.facebook.com/v18.0/{res['id']}/comments"
-            requests.post(comment_url, data={"message": f"📺 Watch Full Match Here: https://bulbul4u-live.xyz", "access_token": FB_ACCESS_TOKEN})
-            print("[💬 Worker 3] Comment Placed!")
+            comment_text = f"📺 Watch Full Match Without Buffering Here: https://bulbul4u-live.xyz"
+            comment_img_path = "comment_image.jpeg" # Repo mein mojood static image
+            
+            # Check karega agar repo mein picture hai, toh picture ke sath comment karega
+            if os.path.exists(comment_img_path):
+                with open(comment_img_path, "rb") as img:
+                    requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN}, files={"source": img})
+                print("[✅ Worker 3] Photo wala Comment SUCCESS!")
+            else:
+                # Agar ghalti se picture upload nahi ki, toh error nahi dega, sirf text post kar dega
+                print("[⚠️] comment_image.jpeg nahi mili! Sirf text comment kar raha hoon...")
+                requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN})
+            
             return True
     except Exception as e:
         print(f"[💥 Worker 3] Upload Error: {e}")
     return False
+
+
+
+
+
+# ========================================
+
+# def worker_3_upload(video_path, page_id, clip_number):
+#     print(f"[📤 Worker 3] Facebook par Video post ki ja rahi hai...")
+#     url = f"https://graph-video.facebook.com/v18.0/{page_id}/videos"
+#     title, desc = generate_unique_metadata(clip_number)
+    
+#     payload = {"title": title, "description": desc, "access_token": FB_ACCESS_TOKEN}
+    
+#     try:
+#         with open(video_path, "rb") as f:
+#             res = requests.post(url, data=payload, files={"source": f}).json()
+#         if "id" in res:
+#             print(f"[✅ Worker 3] Video Upload SUCCESS! (ID: {res['id']})")
+            
+#             # Commenting
+#             time.sleep(10) # Video process hone ka chota sa wait
+#             comment_url = f"https://graph.facebook.com/v18.0/{res['id']}/comments"
+#             requests.post(comment_url, data={"message": f"📺 Watch Full Match Here: https://bulbul4u-live.xyz", "access_token": FB_ACCESS_TOKEN})
+#             print("[💬 Worker 3] Comment Placed!")
+#             return True
+#     except Exception as e:
+#         print(f"[💥 Worker 3] Upload Error: {e}")
+#     return False
 
 # ==========================================
 # MAIN LOOP (THE BRAIN)
