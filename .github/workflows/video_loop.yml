@@ -52,7 +52,7 @@ jobs:
 
     - name: Install Python Requirements
       run: |
-        pip install selenium selenium-wire webdriver-manager blinker==1.7.0 "setuptools<70" requests moviepy numpy pillow
+        pip install selenium selenium-wire webdriver-manager blinker==1.7.0 "setuptools<70" requests moviepy==1.0.3 numpy pillow
 
     - name: Start The Bot with Virtual Screen
       env:
