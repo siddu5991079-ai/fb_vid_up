@@ -1,0 +1,69 @@
+name: Ultimate Hybrid Video Bot
+
+on:
+  workflow_dispatch:
+    inputs:
+      match_title:
+        description: 'Match Title'
+        required: true
+        default: 'Team A vs Team B Live Match'
+      match_desc:
+        description: 'Match Description'
+        required: true
+        default: 'Watch the most exciting clash of the year!'
+      hashtags:
+        description: 'Hashtags'
+        required: true
+        default: '#LiveCricket #CricketFans'
+      target_url:
+        description: 'Target Website URL'
+        required: true
+        default: 'https://dadocric.st/player.php?id=willowextra'
+      proxy_ip:
+        description: 'Proxy IP Address'
+        required: true
+        default: '31.59.20.176'
+      proxy_port:
+        description: 'Proxy Port'
+        required: true
+        default: '6754'
+      proxy_user:
+        description: 'Proxy Username'
+        required: true
+        default: 'ehhppbec'
+      proxy_pass:
+        description: 'Proxy Password'
+        required: true
+        default: '5f69y4wngj70'
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360 # 6 Ghante ki Full limit
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Install System Tools & Fake Screen (Xvfb)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg google-chrome-stable xvfb imagemagick
+
+    - name: Install Python Requirements
+      run: |
+        pip install selenium selenium-wire webdriver-manager blinker==1.7.0 "setuptools<70" requests moviepy numpy pillow
+
+    - name: Start The Bot with Virtual Screen
+      env:
+        FB_ACCESS_TOKEN: ${{ secrets.FB_ACCESS_TOKEN }} 
+        GH_PAT: ${{ secrets.GH_PAT }}
+        MATCH_TITLE: ${{ inputs.match_title }}
+        MATCH_DESC: ${{ inputs.match_desc }}
+        HASHTAGS: ${{ inputs.hashtags }}
+        TARGET_URL: ${{ inputs.target_url }}
+        PROXY_IP: ${{ inputs.proxy_ip }}
+        PROXY_PORT: ${{ inputs.proxy_port }}
+        PROXY_USER: ${{ inputs.proxy_user }}
+        PROXY_PASS: ${{ inputs.proxy_pass }}
+      run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python -u video_bot.py
