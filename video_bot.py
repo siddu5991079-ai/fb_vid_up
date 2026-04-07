@@ -7,6 +7,12 @@ import requests
 import random 
 import numpy as np
 from PIL import Image, ImageFilter
+# ==========================================
+# 🦸‍♂️ THE SUPERMAN PATCH (For Pillow 10+)
+# ==========================================
+if not hasattr(Image, 'ANTIALIAS'):
+    Image.ANTIALIAS = Image.LANCZOS
+
 from datetime import datetime, timezone, timedelta
 from seleniumwire import webdriver
 from selenium.webdriver.chrome.service import Service
