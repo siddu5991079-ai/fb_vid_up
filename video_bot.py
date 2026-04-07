@@ -83,7 +83,7 @@ def generate_unique_metadata(clip_number):
     chosen_desc = random.choice(descriptions)
     
     # ✂️ THE SMART TRIMMER (Facebook API Byte Limit Fix)
-    if len(chosen_title) > 100:
+    if len(chosen_title) > 240:
         print(f"[⚠️] Title lamba tha. Facebook ke byte-limit ke liye safe size par trim kar raha hoon...")
         # 97 characters tak rakho aur aagay 3 dots lagao
         chosen_title = chosen_title[:97] + "..."
