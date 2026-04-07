@@ -61,6 +61,11 @@ END_TIME_LIMIT = (5 * 60 * 60) + (50 * 60)
 # ==========================================
 # 🧠 ANTI-SPAM (SPINTAX) GENERATOR
 # ==========================================
+
+
+# ==========================================
+# 🧠 ANTI-SPAM (SPINTAX) GENERATOR
+# ==========================================
 def generate_unique_metadata(clip_number):
     print(f"\n[🧠] Generating Unique Metadata (Spintax) for Clip #{clip_number}...")
     tags_list = HASHTAGS.split()
@@ -85,9 +90,52 @@ def generate_unique_metadata(clip_number):
     chosen_title = random.choice(titles)
     chosen_desc = random.choice(descriptions)
     
+    # ✂️ THE SMART TRIMMER (Facebook API 255 Char Limit Fix)
+    if len(chosen_title) > 250:
+        print(f"[⚠️] Title lamba ho gaya tha ({len(chosen_title)} chars). Facebook ke liye trim kar raha hoon...")
+        # 247 characters tak rakho aur aagay 3 dots lagao taake total 250 rahay
+        chosen_title = chosen_title[:247] + "..."
+        
     print(f"  --> Selected Title: {chosen_title}")
     print(f"  --> Emojis Used: {emo}")
     return chosen_title, chosen_desc
+
+
+
+
+
+
+
+
+# ===============================================
+
+# def generate_unique_metadata(clip_number):
+#     print(f"\n[🧠] Generating Unique Metadata (Spintax) for Clip #{clip_number}...")
+#     tags_list = HASHTAGS.split()
+#     random.shuffle(tags_list)
+#     shuffled_tags = " ".join(tags_list)
+    
+#     emojis = ["🔥", "🏏", "⚡", "🏆", "💥", "😱", "📺", "🚀"]
+#     emo = random.sample(emojis, 3) 
+#     current_time = datetime.now(PKT).strftime("%I:%M %p")
+    
+#     titles = [
+#         f"🔴 LIVE: {MATCH_TITLE} {emo[0]}",
+#         f"{emo[1]} EXCLUSIVE HIGHLIGHT: {MATCH_TITLE}",
+#         f"⚡ {MATCH_TITLE} - Best Moment {emo[2]}"
+#     ]
+    
+#     descriptions = [
+#         f"{MATCH_DESC}\n\n⏱️ Update: {current_time} | Clip #{clip_number}\n\n👇 Watch Full Match Link in First Comment!\n\n{shuffled_tags}",
+#         f"Current match situation! {emo[1]}\n\n{shuffled_tags}\n\n{MATCH_DESC}\n\n🎥 Frame: {clip_number} (Time: {current_time})\nCheck comments for 0 buffering stream link! 👇"
+#     ]
+    
+#     chosen_title = random.choice(titles)
+#     chosen_desc = random.choice(descriptions)
+    
+#     print(f"  --> Selected Title: {chosen_title}")
+#     print(f"  --> Emojis Used: {emo}")
+#     return chosen_title, chosen_desc
 
 # ==========================================
 # 🔄 RELAY RACE (AUTO RESTART)
