@@ -77,7 +77,7 @@ def generate_unique_metadata(clip_number):
     chosen_desc_body = random.choice(all_descriptions)
     
     # ✂️ THE SMART TRIMMER (Facebook API Byte Limit Fix - No Emojis here)
-    if len(chosen_title) > 95:
+    if len(chosen_title) > 255:
         print(f"[⚠️] Title lamba tha. Safe size par trim kar raha hoon...")
         chosen_title = chosen_title[:92] + "..."
         
