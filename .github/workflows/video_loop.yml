@@ -22,11 +22,11 @@ on:
       proxy_ip:
         description: 'Proxy IP Address'
         required: true
-        default: '31.59.20.176'
+        default: '45.38.107.97'
       proxy_port:
         description: 'Proxy Port'
         required: true
-        default: '6754'
+        default: '6014'
       proxy_user:
         description: 'Proxy Username'
         required: true
