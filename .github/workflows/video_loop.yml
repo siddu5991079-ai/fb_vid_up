@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       titles_list:
-        description: 'Titles Array (Separate with | e.g. Title 1 | Title 2)'
+        description: 'Titles Array (Separate with ,, e.g. Title 1 ,, Title 2)'
         required: true
-        default: 'Delhi Capitals vs Gujarat Titans Live | DC vs GT HD Stream | Watch DC vs GT Blockbuster Clash'
+        default: 'Delhi Capitals vs Gujarat Titans Live ,, DC vs GT HD Stream ,, Watch DC vs GT Blockbuster Clash'
       descs_list:
-        description: 'Descriptions Array (Separate with | )'
+        description: 'Descriptions Array (Separate with ,, )'
         required: true
-        default: 'Watch the ultimate IPL showdown between DC and GT! | Full action of DC vs GT Live here. | Catch every boundary live!'
+        default: 'Watch the ultimate IPL showdown between DC and GT! ,, Full action of DC vs GT Live here. ,, Catch every boundary live!'
       hashtags:
         description: 'Hashtags (Space separated)'
         required: true
@@ -39,7 +39,7 @@ on:
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 360 # 6 Ghante ki Full limit
+    timeout-minutes: 360 
 
     steps:
     - name: Checkout Code
@@ -67,6 +67,90 @@ jobs:
         PROXY_USER: ${{ inputs.proxy_user }}
         PROXY_PASS: ${{ inputs.proxy_pass }}
       run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python -u video_bot.py
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# name: Ultimate Hybrid Video Bot
+
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       titles_list:
+#         description: 'Titles Array (Separate with | e.g. Title 1 | Title 2)'
+#         required: true
+#         default: 'Delhi Capitals vs Gujarat Titans Live | DC vs GT HD Stream | Watch DC vs GT Blockbuster Clash'
+#       descs_list:
+#         description: 'Descriptions Array (Separate with | )'
+#         required: true
+#         default: 'Watch the ultimate IPL showdown between DC and GT! | Full action of DC vs GT Live here. | Catch every boundary live!'
+#       hashtags:
+#         description: 'Hashtags (Space separated)'
+#         required: true
+#         default: '#DCvsGT #IPL2026 #DelhiCapitals #GujaratTitans #T20Cricket #LiveMatch'
+#       target_url:
+#         description: 'Target Website URL'
+#         required: true
+#         default: 'https://dadocric.st/player.php?id=willowextra'
+#       proxy_ip:
+#         description: 'Proxy IP Address'
+#         required: true
+#         default: '31.59.20.176'
+#       proxy_port:
+#         description: 'Proxy Port'
+#         required: true
+#         default: '6754'
+#       proxy_user:
+#         description: 'Proxy Username'
+#         required: true
+#         default: 'ehhppbec'
+#       proxy_pass:
+#         description: 'Proxy Password'
+#         required: true
+#         default: '5f69y4wngj70'
+
+# jobs:
+#   run-bot:
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 360 # 6 Ghante ki Full limit
+
+#     steps:
+#     - name: Checkout Code
+#       uses: actions/checkout@v3
+
+#     - name: Install System Tools & Fake Screen (Xvfb)
+#       run: |
+#         sudo apt-get update
+#         sudo apt-get install -y ffmpeg google-chrome-stable xvfb imagemagick
+
+#     - name: Install Python Requirements
+#       run: |
+#         pip install selenium selenium-wire webdriver-manager blinker==1.7.0 "setuptools<70" requests moviepy==1.0.3 numpy pillow
+
+#     - name: Start The Bot with Virtual Screen
+#       env:
+#         FB_ACCESS_TOKEN: ${{ secrets.FB_ACCESS_TOKEN }} 
+#         GH_PAT: ${{ secrets.GH_PAT }}
+#         TITLES_LIST: ${{ inputs.titles_list }}
+#         DESCS_LIST: ${{ inputs.descs_list }}
+#         HASHTAGS: ${{ inputs.hashtags }}
+#         TARGET_URL: ${{ inputs.target_url }}
+#         PROXY_IP: ${{ inputs.proxy_ip }}
+#         PROXY_PORT: ${{ inputs.proxy_port }}
+#         PROXY_USER: ${{ inputs.proxy_user }}
+#         PROXY_PASS: ${{ inputs.proxy_pass }}
+#       run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python -u video_bot.py
 
 
 
