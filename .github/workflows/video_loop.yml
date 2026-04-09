@@ -18,7 +18,7 @@ on:
       target_url:
         description: 'Target Website URL'
         required: true
-        default: 'https://dadocric.st/player.php?id=willowextra'
+        default: 'https://dadocric.st/player.php?id=starsp'
       proxy_ip:
         description: 'Proxy IP Address'
         required: true
