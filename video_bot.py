@@ -1,4 +1,4 @@
-import mimetypes
+import mimetypes 
 import os
 import time
 import subprocess
@@ -14,10 +14,10 @@ from PIL import Image, ImageFilter
 # ==========================================
 # 🦸‍♂️ THE SUPERMAN PATCH (For Pillow 10+)
 # ==========================================
-print("[*] Checking Pillow version and applying Superman Patch if needed...")
+print(" Checking Pillow version and applying Superman Patch if needed...")
 if not hasattr(Image, 'ANTIALIAS'):
     Image.ANTIALIAS = Image.LANCZOS
-    print("[✅] Superman Patch Applied.")
+    print(" Superman Patch Applied.")
 
 from datetime import datetime, timezone, timedelta
 from seleniumwire import webdriver
@@ -26,20 +26,20 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 
 # MoviePy for Video Editing
-print("[*] Loading MoviePy modules...")
+print(" Loading MoviePy modules...")
 from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
 import moviepy.audio.fx.all as afx
 
 # ==========================================
 # ⚙️ SETTINGS & TOKENS
 # ==========================================
-print("\n[*] Initializing Settings and Environment Variables...")
+print("\n Initializing Settings and Environment Variables...")
 TARGET_WEBSITE = os.environ.get('TARGET_URL', '').strip()
 FB_ACCESS_TOKEN = os.environ.get('FB_ACCESS_TOKEN', '').strip()
 
 TITLES_INPUT = os.environ.get('TITLES_LIST', 'Live Match Today,,Watch Full Match DC vs GT').strip()
-DESCS_INPUT = os.environ.get('DESCS_LIST', 'Watch the live action here without buffer').strip()
-HASHTAGS = os.environ.get('HASHTAGS', '#LiveMatch #Cricket').strip()
+DESCS_INPUT = os.environ.get('DESCS_LIST', 'Watch the live action here').strip()
+HASHTAGS = os.environ.get('HASHTAGS', '#IPL2026 #DCvsGT #CricketLovers #LiveMatch').strip()
 
 PROXY_IP = os.environ.get('PROXY_IP', '31.59.20.176')
 PROXY_PORT = os.environ.get('PROXY_PORT', '6754')
@@ -56,21 +56,18 @@ END_TIME_LIMIT = (5 * 60 * 60) + (50 * 60)
 # ==========================================
 # 🌐 HTML2IMAGE THUMBNAIL ENGINE (PROJECT 5)
 # ==========================================
-# GitHub Actions ke liye safe flags lagaye gaye hain
-hti = Html2Image(size=(1280, 1000), custom_flags=['--hide-scrollbars', '--no-sandbox', '--disable-gpu'])
+hti = Html2Image(size=(1280, 1000), custom_flags=)
 
 def get_image_base64(image_path):
     with open(image_path, "rb") as img_file:
         b64_string = base64.b64encode(img_file.read()).decode('utf-8')
-        ext = image_path.split('.')[-1].lower()
+        ext = image_path.split('.').lower()
         if ext == 'png': return f"data:image/png;base64,{b64_string}"
         else: return f"data:image/jpeg;base64,{b64_string}"
 
 def worker_0_5_generate_thumbnail(central_image_path, match_name_text, output_image_path):
-    print(f"\n[🎨 Worker 0.5] Rendering Studio Thumbnail for: {match_name_text}...")
-    if not os.path.exists(central_image_path): 
-        print("[❌] Raw frame nahi mila!")
-        return False
+    print(f"\n Rendering Studio Thumbnail for: {match_name_text}...")
+    if not os.path.exists(central_image_path): return False
     try:
         b64_image = get_image_base64(central_image_path)
         html_code = f"""
@@ -114,36 +111,36 @@ def worker_0_5_generate_thumbnail(central_image_path, match_name_text, output_im
         </html>
         """
         hti.screenshot(html_str=html_code, save_as=output_image_path)
-        print(f"[✅] Thumbnail Ready: {output_image_path}")
+        print(f" Thumbnail Ready: {output_image_path}")
         return True
     except Exception as e:
-        print(f"[❌] Thumbnail Gen Error: {e}")
+        print(f" Thumbnail Gen Error: {e}")
         return False
 
 # ==========================================
 # 🧠 ANTI-SPAM METADATA
 # ==========================================
 def generate_unique_metadata(clip_number):
-    all_titles = [t.strip() for t in TITLES_INPUT.split(',,') if t.strip()]
-    all_descriptions = [d.strip() for d in DESCS_INPUT.split(',,') if d.strip()]
-    if not all_titles: all_titles = ["Live Match Today"]
-    if not all_descriptions: all_descriptions = ["Watch the live stream action now!"]
+    all_titles =
+    all_descriptions =
+    if not all_titles: all_titles =
+    if not all_descriptions: all_descriptions =
     
     chosen_base_title = random.choice(all_titles)
     chosen_desc_body = random.choice(all_descriptions)
     chosen_title = f"{chosen_base_title}" 
     
-    if len(chosen_title) > 250: chosen_title = chosen_title[:247] + "..."
+    if len(chosen_title) > 250: chosen_title = chosen_title + "..."
         
-    emojis = ["🔥", "🏏", "⚡", "🏆", "💥", "😱", "📺", "🚀"]
+    emojis =
     emo = random.sample(emojis, 3) 
     current_time = datetime.now(PKT).strftime("%I:%M %p")
 
     tags_list = HASHTAGS.split() 
     random.shuffle(tags_list)    
-    selected_4_tags = " ".join(tags_list[:4]) 
+    selected_4_tags = " ".join(tags_list) 
     
-    final_description = f"{chosen_title} {emo[0]} {emo[1]} {emo[2]}\n\n{chosen_desc_body}\n\n⏱️ Update: {current_time} | Clip #{clip_number}\n\n👇 Watch Full Match Link in First Comment!\n\n{selected_4_tags}"
+    final_description = f"{chosen_title} {emo} {emo} {emo}\n\n{chosen_desc_body}\n\n⏱️ Update: {current_time} | Clip #{clip_number}\n\n👇 Watch Full Match Link in First Comment!\n\n{selected_4_tags}"
     return chosen_title, final_description
 
 # ==========================================
@@ -155,19 +152,15 @@ def trigger_next_run():
     branch = os.environ.get('GITHUB_REF_NAME', 'main')
     url = f"https://api.github.com/repos/{repo}/actions/workflows/video_loop.yml/dispatches"
     headers = {"Accept": "application/vnd.github.v3+json", "Authorization": f"token {token}"}
-    
     data = {
         "ref": branch,
         "inputs": {
-            "target_url": TARGET_WEBSITE,
-            "proxy_ip": PROXY_IP, "proxy_port": PROXY_PORT,
+            "target_url": TARGET_WEBSITE, "proxy_ip": PROXY_IP, "proxy_port": PROXY_PORT,
             "proxy_user": PROXY_USER, "proxy_pass": PROXY_PASS,
             "titles_list": TITLES_INPUT, "descs_list": DESCS_INPUT, "hashtags": HASHTAGS
         }
     }
-    try:
-        res = requests.post(url, headers=headers, json=data)
-        if res.status_code == 204: print("[✅] SUCCESS! Naya Bot Start Ho Gaya Hai!")
+    try: requests.post(url, headers=headers, json=data)
     except: pass
 
 # ==========================================
@@ -198,7 +191,7 @@ def get_link_with_headers():
 def calculate_expiry_time(url):
     try:
         params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
-        exp = int(params.get('expires', params.get('e', [0]))[0])
+        exp = int(params.get('expires', params.get('e',)))
         if exp: return datetime.fromtimestamp(exp, PKT)
     except: pass
     return datetime.now(PKT) + timedelta(hours=2)
@@ -214,9 +207,9 @@ def get_page_id():
 # WORKER 0: SCREENSHOT CAPTURE
 # ==========================================
 def worker_0_capture_frame(data, output_img):
-    print(f"\n[📸 Worker 0] Capturing screenshot from live stream...")
-    headers_cmd = f"User-Agent: {data['ua']}\r\nReferer: {data['referer']}\r\nCookie: {data['cookie']}"
-    cmd = ['ffmpeg', '-y', '-headers', headers_cmd, '-i', data['url'], '-vframes', '1', '-q:v', '2', output_img]
+    print(f"\n Capturing screenshot from live stream...")
+    headers_cmd = f"User-Agent: {data}\r\nReferer: {data}\r\nCookie: {data}"
+    cmd =, '-vframes', '1', '-q:v', '2', output_img]
     subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return os.path.exists(output_img)
 
@@ -224,9 +217,9 @@ def worker_0_capture_frame(data, output_img):
 # WORKER 1: VIDEO CAPTURE
 # ==========================================
 def worker_1_capture_video(data, filename, duration=10):
-    print(f"\n[🎥 Worker 1] Initiating Stream Capture...")
-    headers_cmd = f"User-Agent: {data['ua']}\r\nReferer: {data['referer']}\r\nCookie: {data['cookie']}"
-    cmd = ['ffmpeg', '-y', '-headers', headers_cmd, '-i', data['url'], '-t', str(duration), '-c', 'copy', '-bsf:a', 'aac_adtstoasc', filename]
+    print(f"\n Initiating Stream Capture...")
+    headers_cmd = f"User-Agent: {data}\r\nReferer: {data}\r\nCookie: {data}"
+    cmd =, '-t', str(duration), '-c', 'copy', '-bsf:a', 'aac_adtstoasc', filename]
     subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return os.path.exists(filename)
 
@@ -234,145 +227,80 @@ def worker_1_capture_video(data, filename, duration=10):
 # WORKER 2: VIDEO EDITING
 # ==========================================
 def worker_2_edit_video(dynamic_vid, static_vid, custom_audio, output_vid):
-    print(f"\n[🎬 Worker 2] Starting Video Editing Engine...")
+    print(f"\n Starting Video Editing Engine...")
     try:
         dyn_clip = VideoFileClip(dynamic_vid)
         stat_clip = VideoFileClip(static_vid)
         dyn_clip = dyn_clip.resize(stat_clip.size)
 
-        def blur(frame):
-            return np.array(Image.fromarray(frame).filter(ImageFilter.GaussianBlur(20)))
+        def blur(frame): return np.array(Image.fromarray(frame).filter(ImageFilter.GaussianBlur(20)))
 
         dyn_clip = dyn_clip.fl_image(blur)
-        merged = concatenate_videoclips([dyn_clip, stat_clip])
-        
+        merged = concatenate_videoclips()
         audio = AudioFileClip(custom_audio)
         final_audio = afx.audio_loop(audio, duration=merged.duration)
         final_video = merged.set_audio(final_audio)
 
         final_video.write_videofile(output_vid, codec="libx264", audio_codec="aac", fps=stat_clip.fps, preset="ultrafast", logger=None)
-
         dyn_clip.close(); stat_clip.close(); audio.close(); final_video.close()
         return True
     except: return False
 
 # ==========================================
-# WORKER 3: 2-STEP FACEBOOK UPLOAD
+# WORKER 3: AAPKA 100% WORKING 1-STEP UPLOAD
 # ==========================================
-def worker_3_upload(video_path, page_id, title, desc, thumb_path):
-    print(f"\n[📤 Worker 3] Preparing Facebook Upload...")
+def worker_3_upload(video_path, page_id, title, desc, dynamic_thumb_path):
+    print(f"\n Preparing Facebook Upload (1-Step Method)...")
     url = f"https://graph-video.facebook.com/v18.0/{page_id}/videos"
     payload = {"title": title, "description": desc, "access_token": FB_ACCESS_TOKEN}
     
+    files_to_open = []
     try:
-        print(f"[*] Step 1: Uploading Video...")
-        with open(video_path, "rb") as f_vid:
-            res = requests.post(url, data=payload, files={"source": ("video.mp4", f_vid, "video/mp4")}).json()
+        f_vid = open(video_path, "rb")
+        files_to_open.append(f_vid)
+        files = {"source": ("video.mp4", f_vid, "video/mp4")}
+        
+        # Yahan hum wo auto-generated thumbnail attach kar rahe hain
+        if dynamic_thumb_path and os.path.exists(dynamic_thumb_path):
+            print(f" Dynamic Thumbnail found: '{dynamic_thumb_path}'. Attaching directly to upload...")
+            f_thumb = open(dynamic_thumb_path, "rb")
+            files_to_open.append(f_thumb)
             
+            # HTML2IMAGE se hamesha .png ati hai, isliye explicitly image/png de rahe hain
+            files = (dynamic_thumb_path, f_thumb, "image/png")
+        else:
+            print(f" No dynamic thumbnail found. Uploading video only.")
+
+        print(f" Pushing video & thumbnail together to Graph API...")
+        res = requests.post(url, data=payload, files=files).json()
+        
         if "id" in res:
-            video_id = res['id']
-            print(f"[✅] Video Upload SUCCESS! (Post ID: {video_id})")
+            print(f" Video & Thumbnail Upload SUCCESS! (Post ID: {res})")
             
-            # --- THE FIX: 2-STEP DYNAMIC THUMBNAIL ATTACK ---
-            if thumb_path and os.path.exists(thumb_path):
-                print(f"[*] Step 2: Applying dynamically generated Studio Thumbnail ({thumb_path})...")
-                # Video upload hone ke baad uski details update karne ka endpoint
-                thumb_update_url = f"https://graph.facebook.com/v18.0/{video_id}"
-                
-                # File ko explicitly image/png batana zaroori hai
-                with open(thumb_path, "rb") as f_thumb:
-                    thumb_res = requests.post(
-                        thumb_update_url, 
-                        data={"access_token": FB_ACCESS_TOKEN}, 
-                        files={"thumb": (os.path.basename(thumb_path), f_thumb, 'image/png')}
-                    ).json()
-                    
-                    if thumb_res.get("success"): 
-                        print("[✅] Custom Studio Thumbnail Applied Successfully!")
-                    else:
-                        print(f"[⚠️] Facebook rejected the thumbnail. Reason: {thumb_res}")
-            else:
-                print(f"[⚠️] Thumbnail file '{thumb_path}' nahi mili!")
-
-            # Comment Logic
+            print(" Waiting 15 seconds for processing before commenting...")
             time.sleep(15) 
-            comment_url = f"https://graph.facebook.com/v18.0/{video_id}/comments"
+            
+            comment_url = f"https://graph.facebook.com/v18.0/{res}/comments"
             comment_text = f"📺 Watch Full Match Without Buffering Here: https://bulbul4u-live.xyz"
-            requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN})
-            print("[✅ Worker 3] Upload Workflow Complete.")
             
+            comment_img_path = "comment_image.jpeg" 
+            if os.path.exists(comment_img_path):
+                with open(comment_img_path, "rb") as img:
+                    requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN}, files={"source": img})
+                print(" Photo Comment Placed.")
+            else:
+                requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN})
+                print(" Text Comment Placed.")
+            return True
+        else:
+             print(f" Facebook API Error: {res}")
+             return False
+             
     except Exception as e:
-        print(f"[💥 Worker 3] Upload Crash: {e}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ==========================================
-# WORKER 3: 2-STEP FACEBOOK UPLOAD
-# ==========================================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# def worker_3_upload(video_path, page_id, title, desc, thumb_path):
-#     print(f"\n[📤 Worker 3] Preparing Facebook Upload...")
-#     url = f"https://graph-video.facebook.com/v18.0/{page_id}/videos"
-#     payload = {"title": title, "description": desc, "access_token": FB_ACCESS_TOKEN}
-    
-#     try:
-#         print(f"[*] Step 1: Uploading Video...")
-#         with open(video_path, "rb") as f_vid:
-#             res = requests.post(url, data=payload, files={"source": ("video.mp4", f_vid, "video/mp4")}).json()
-            
-#         if "id" in res:
-#             video_id = res['id']
-#             print(f"[✅] Video Upload SUCCESS! (Post ID: {video_id})")
-            
-#             if thumb_path and os.path.exists(thumb_path):
-#                 print(f"[*] Step 2: Applying dynamically generated Studio Thumbnail...")
-#                 thumb_update_url = f"https://graph.facebook.com/v18.0/{video_id}"
-#                 with open(thumb_path, "rb") as f_thumb:
-#                     thumb_res = requests.post(thumb_update_url, data={"access_token": FB_ACCESS_TOKEN}, files={"thumb": f_thumb}).json()
-#                     if thumb_res.get("success"): print("[✅] Custom Studio Thumbnail Applied!")
-#             else:
-#                 print(f"[⚠️] Thumbnail file '{thumb_path}' not found! Uploading without it.")
-
-#             # Comment Logic
-#             time.sleep(15) 
-#             comment_url = f"https://graph.facebook.com/v18.0/{video_id}/comments"
-#             comment_text = f"📺 Watch Full Match Without Buffering Here: https://bulbul4u-live.xyz"
-#             requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN})
-#             print("[✅ Worker 3] Upload Workflow Complete.")
-            
-#     except Exception as e:
-#         print(f"[💥 Worker 3] Upload Crash: {e}")
+        print(f" Upload Crash: {e}")
+        return False
+    finally:
+        for f in files_to_open: f.close()
 
 # ==========================================
 # MAIN LOOP (THE BRAIN)
@@ -388,7 +316,7 @@ def main():
     data = get_link_with_headers()
     if not data: return 
         
-    expiry_dt = calculate_expiry_time(data['url'])
+    expiry_dt = calculate_expiry_time(data)
     clip_counter = 1
     next_run_triggered = False
     
@@ -407,19 +335,16 @@ def main():
             trigger_next_run()
             next_run_triggered = True 
             
-        if elapsed_time > END_TIME_LIMIT:
-            print("\n[🛑] MAXIMUM LIFETIME REACHED. Exiting.")
-            break
+        if elapsed_time > END_TIME_LIMIT: break
         
         if time_left_seconds <= 120:
             new_data = get_link_with_headers()
             if new_data:
                 data = new_data
-                expiry_dt = calculate_expiry_time(data['url'])
+                expiry_dt = calculate_expiry_time(data)
             else:
                 time.sleep(60); continue 
         
-        # Determine Title before any generation
         title, desc = generate_unique_metadata(clip_counter)
         
         raw_frame = f"live_frame_{clip_counter}.jpg"
@@ -427,23 +352,19 @@ def main():
         raw_vid = f"raw_{clip_counter}.mp4"
         final_vid = f"final_{clip_counter}.mp4"
         
-        # 🔗 THE FIX: HYBRID ACTION FLOW
+        # 🔗 HYBRID ACTION FLOW
         if worker_0_capture_frame(data, raw_frame):
-            # Generate the image using HTML2IMAGE (No .ttf files needed!)
             worker_0_5_generate_thumbnail(raw_frame, title, generated_thumb)
-            
-            # Now Capture Video
             if worker_1_capture_video(data, raw_vid, duration=10):
                 if worker_2_edit_video(raw_vid, static_video, audio_file, final_vid):
-                    # Upload everything together
+                    # Passing generated_thumb to your working upload logic!
                     worker_3_upload(final_vid, page_id, title, desc, generated_thumb)
         
-        # 🧹 GARBAGE COLLECTOR
-        print("\n[🧹 Cleanup Engine Started]")
-        for temp_file in [raw_frame, generated_thumb, raw_vid, final_vid]:
+        print("\n")
+        for temp_file in:
             if os.path.exists(temp_file): 
                 os.remove(temp_file)
-                print(f"  [-] Deleted: {temp_file}")
+                print(f"  Deleted: {temp_file}")
             
         clip_counter += 1
         time.sleep(WAIT_TIME_SECONDS)
