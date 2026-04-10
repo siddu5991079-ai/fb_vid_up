@@ -18,7 +18,7 @@ on:
       target_url:
         description: 'Target Website URL'
         required: true
-        default: 'https://dadocric.st/player.php?id=willowextra'
+        default: 'https://dadocric.st/player.php?id=starsp'
       thumbnail_image_name:
         description: 'Thumbnail Name (Leave empty! Bot ab stream se auto-generate karega)'
         required: false
