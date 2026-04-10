@@ -14,10 +14,10 @@ from PIL import Image, ImageFilter
 # ==========================================
 # 🦸‍♂️ THE SUPERMAN PATCH (For Pillow 10+)
 # ==========================================
-print(" Checking Pillow version...")
+print("[⚙️ System] Checking Pillow version...")
 if not hasattr(Image, 'ANTIALIAS'):
     Image.ANTIALIAS = Image.LANCZOS
-    print(" Superman Patch Applied for Pillow.")
+    print("[✅ System] Superman Patch Applied for Pillow.")
 
 from datetime import datetime, timezone, timedelta
 from seleniumwire import webdriver
@@ -26,15 +26,15 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 
 # MoviePy for Video Editing
-print(" Loading MoviePy modules (This might take a second)...")
+print("[⚙️ System] Loading MoviePy modules (This might take a second)...")
 from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
 import moviepy.audio.fx.all as afx
-print(" MoviePy modules loaded successfully.")
+print("[✅ System] MoviePy modules loaded successfully.")
 
 # ==========================================
 # ⚙️ SETTINGS & TOKENS
 # ==========================================
-print("\n Initializing Settings and Environment Variables...")
+print("\n[⚙️ System] Initializing Settings and Environment Variables...")
 TARGET_WEBSITE = os.environ.get('TARGET_URL', '').strip()
 FB_ACCESS_TOKEN = os.environ.get('FB_ACCESS_TOKEN', '').strip()
 
@@ -53,34 +53,34 @@ WAIT_TIME_SECONDS = 300
 START_TIME = time.time()
 RESTART_TRIGGER_TIME = (5 * 60 * 60) + (30 * 60) 
 END_TIME_LIMIT = (5 * 60 * 60) + (50 * 60) 
-print(" All Environment Variables Loaded.")
+print("[✅ System] All Environment Variables Loaded.")
 
 # ==========================================
 # 🌐 HTML2IMAGE THUMBNAIL ENGINE (PROJECT 5)
 # ==========================================
-print(" Initializing HTML2Image Engine for Thumbnails...")
-hti = Html2Image(size=(1280, 720), custom_flags=)
+print("[⚙️ System] Initializing HTML2Image Engine for Thumbnails...")
+hti = Html2Image(size=(1280, 720), custom_flags=['--hide-scrollbars', '--no-sandbox', '--disable-gpu'])
 
 def get_image_base64(image_path):
-    print(f"  Converting image '{image_path}' to Base64 format...")
+    print(f"  [>] Converting image '{image_path}' to Base64 format...")
     with open(image_path, "rb") as img_file:
         b64_string = base64.b64encode(img_file.read()).decode('utf-8')
-        ext = image_path.split('.').lower()
-        print(f"  Conversion done. Extension detected: {ext}")
+        ext = image_path.split('.')[-1].lower()
+        print(f"  [>] Conversion done. Extension detected: {ext}")
         if ext == 'png': return f"data:image/png;base64,{b64_string}"
         else: return f"data:image/jpeg;base64,{b64_string}"
 
 def worker_0_5_generate_thumbnail(central_image_path, match_name_text, output_image_path):
-    print(f"\n Rendering Studio Thumbnail for: '{match_name_text}'")
+    print(f"\n[🎨 Worker 0.5] Rendering Studio Thumbnail for: '{match_name_text}'")
     
-    print(f"  Checking if central image '{central_image_path}' exists...")
+    print(f"  [>] Checking if central image '{central_image_path}' exists...")
     if not os.path.exists(central_image_path): 
-        print(f"  Central image NOT FOUND! Aborting thumbnail creation.")
+        print(f"  [❌ Worker 0.5] Central image NOT FOUND! Aborting thumbnail creation.")
         return False
         
     try:
         b64_image = get_image_base64(central_image_path)
-        print("  Generating HTML/CSS template...")
+        print("  [>] Generating HTML/CSS template...")
         
         html_code = f"""
         <!DOCTYPE html>
@@ -126,58 +126,58 @@ def worker_0_5_generate_thumbnail(central_image_path, match_name_text, output_im
         </html>
         """
         
-        print(f"  Ordering Html2Image to take screenshot and save as '{output_image_path}'...")
+        print(f"  [>] Ordering Html2Image to take screenshot and save as '{output_image_path}'...")
         hti.screenshot(html_str=html_code, save_as=output_image_path)
-        print(f" Thumbnail successfully generated: {output_image_path}")
+        print(f"[✅ Worker 0.5] Thumbnail successfully generated: {output_image_path}")
         return True
     except Exception as e:
-        print(f" Thumbnail Gen Error: {e}")
+        print(f"[❌ Worker 0.5] Thumbnail Gen Error: {e}")
         return False
 
 # ==========================================
 # 🧠 ANTI-SPAM METADATA
 # ==========================================
 def generate_unique_metadata(clip_number):
-    print(f"\n Generating Unique Titles and Descriptions for Clip #{clip_number}...")
+    print(f"\n[🧠 Metadata] Generating Unique Titles and Descriptions for Clip #{clip_number}...")
     
-    all_titles =
-    all_descriptions =
+    all_titles = [t.strip() for t in TITLES_INPUT.split(',,') if t.strip()]
+    all_descriptions = [d.strip() for d in DESCS_INPUT.split(',,') if d.strip()]
     
     if not all_titles: 
-        print("  Titles array empty, using fallback.")
-        all_titles =
+        print("  [>] Titles array empty, using fallback.")
+        all_titles = ["Live Match Today"]
     if not all_descriptions: 
-        print("  Descriptions array empty, using fallback.")
-        all_descriptions =
+        print("  [>] Descriptions array empty, using fallback.")
+        all_descriptions = ["Watch the live action here!"]
     
     chosen_base_title = random.choice(all_titles)
     chosen_desc_body = random.choice(all_descriptions)
     chosen_title = f"{chosen_base_title}" 
     
-    print(f"  Selected Title: {chosen_title}")
+    print(f"  [>] Selected Title: {chosen_title}")
     
     if len(chosen_title) > 250: 
-        print("  Title exceeds 250 characters. Trimming to safe size...")
-        chosen_title = chosen_title + "..."
+        print("  [>] Title exceeds 250 characters. Trimming to safe size...")
+        chosen_title = chosen_title[:247] + "..."
         
-    emojis =
+    emojis = ["🔥", "🏏", "⚡", "🏆", "💥", "😱", "📺", "🚀"]
     emo = random.sample(emojis, 3) 
     current_time = datetime.now(PKT).strftime("%I:%M %p")
 
     tags_list = HASHTAGS.split() 
     random.shuffle(tags_list)    
-    selected_4_tags = " ".join(tags_list) 
-    print(f"  Selected Hashtags: {selected_4_tags}")
+    selected_4_tags = " ".join(tags_list[:4]) 
+    print(f"  [>] Selected Hashtags: {selected_4_tags}")
     
-    final_description = f"{chosen_title} {emo} {emo} {emo}\n\n{chosen_desc_body}\n\n⏱️ Update: {current_time} | Clip #{clip_number}\n\n👇 Watch Full Match Link in First Comment!\n\n{selected_4_tags}"
-    print(" Metadata generation complete.")
+    final_description = f"{chosen_title} {emo[0]} {emo[1]} {emo[2]}\n\n{chosen_desc_body}\n\n⏱️ Update: {current_time} | Clip #{clip_number}\n\n👇 Watch Full Match Link in First Comment!\n\n{selected_4_tags}"
+    print("[✅ Metadata] Metadata generation complete.")
     return chosen_title, final_description
 
 # ==========================================
 # 🔄 RELAY RACE (AUTO RESTART)
 # ==========================================
 def trigger_next_run():
-    print("\n Attempting to trigger the next bot run via GitHub API...")
+    print("\n[⏰ Relay Race] Attempting to trigger the next bot run via GitHub API...")
     token = os.environ.get('GH_PAT')
     repo = os.environ.get('GITHUB_REPOSITORY') 
     branch = os.environ.get('GITHUB_REF_NAME', 'main')
@@ -193,20 +193,20 @@ def trigger_next_run():
         }
     }
     try: 
-        print(f"  Sending POST request to {url}...")
+        print(f"  [>] Sending POST request to {url}...")
         res = requests.post(url, headers=headers, json=data)
         if res.status_code == 204:
-            print(" Next Bot Triggered Successfully (Status 204).")
+            print("[✅ Relay Race] Next Bot Triggered Successfully (Status 204).")
         else:
-            print(f" Trigger sent but got unexpected status: {res.status_code}")
+            print(f"[⚠️ Relay Race] Trigger sent but got unexpected status: {res.status_code}")
     except Exception as e: 
-        print(f" Request failed: {e}")
+        print(f"[❌ Relay Race] Request failed: {e}")
 
 # ==========================================
 # STEP 1: SELENIUM LINK CHURANA
 # ==========================================
 def get_link_with_headers():
-    print("\n Starting Chrome to steal M3U8 link...")
+    print("\n[🔍 Selenium] Starting Chrome to steal M3U8 link...")
     options = webdriver.ChromeOptions()
     options.add_argument('--headless=new') 
     options.add_argument('--no-sandbox')
@@ -216,19 +216,19 @@ def get_link_with_headers():
 
     driver = None; data = None
     try:
-        print("  Launching webdriver...")
+        print("  [>] Launching webdriver...")
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), seleniumwire_options=seleniumwire_options, options=options)
         
-        print(f"  Hitting Target URL: {TARGET_WEBSITE}")
+        print(f"  [>] Hitting Target URL: {TARGET_WEBSITE}")
         driver.get(TARGET_WEBSITE)
         
-        print("  Sleeping for 5 seconds to bypass Cloudflare/Loading...")
+        print("  [⏳] Sleeping for 5 seconds to bypass Cloudflare/Loading...")
         time.sleep(5)
         
-        print("  Scanning network requests for .m3u8 token...")
+        print("  [>] Scanning network requests for .m3u8 token...")
         for request in driver.requests:
             if request.response and ".m3u8" in request.url:
-                print("  M3U8 link found in requests!")
+                print("  [✅ BINGO] M3U8 link found in requests!")
                 data = {
                     "url": request.url, 
                     "ua": request.headers.get('User-Agent', ''), 
@@ -238,181 +238,187 @@ def get_link_with_headers():
                 break
                 
         if not data:
-            print("  M3U8 link NOT FOUND after scanning.")
+            print("  [❌] M3U8 link NOT FOUND after scanning.")
             
     except Exception as e: 
-        print(f" Crashed during execution: {e}")
+        print(f"[❌ Selenium] Crashed during execution: {e}")
     finally:
         if driver: 
-            print("  Quitting driver and closing browser...")
+            print("  [>] Quitting driver and closing browser...")
             driver.quit()
             
     return data
 
 def calculate_expiry_time(url):
-    print("\n Calculating Token Expiry Time...")
+    print("\n[⏰ Expiry Check] Calculating Token Expiry Time...")
     try:
         params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
-        exp = int(params.get('expires', params.get('e',)))
+        exp = int(params.get('expires', params.get('e', [0]))[0])
         if exp: 
             exp_time = datetime.fromtimestamp(exp, PKT)
-            print(f"  Extracted Expiry: {exp_time.strftime('%I:%M:%S %p PKT')}")
+            print(f"  [✅] Extracted Expiry: {exp_time.strftime('%I:%M:%S %p PKT')}")
             return exp_time
     except Exception as e: 
-        print(f"  Failed to extract expiry from URL: {e}")
+        print(f"  [⚠️] Failed to extract expiry from URL: {e}")
         pass
         
     fallback = datetime.now(PKT) + timedelta(hours=2)
-    print(f"  Using fallback expiry time: {fallback.strftime('%I:%M:%S %p PKT')}")
+    print(f"  [>] Using fallback expiry time: {fallback.strftime('%I:%M:%S %p PKT')}")
     return fallback
 
 def get_page_id():
-    print("\n Verifying Facebook Access Token...")
+    print("\n[🔍 FB Auth] Verifying Facebook Access Token...")
     try:
         res = requests.get("https://graph.facebook.com/v18.0/me", params={"access_token": FB_ACCESS_TOKEN, "fields": "id,name"}).json()
         if 'id' in res: 
-            print(f"  Token is VALID. Connected to Page: {res.get('name')}")
+            print(f"  [✅] Token is VALID. Connected to Page: {res.get('name')}")
             return res.get('id')
         else:
-            print(f"  Invalid Token response: {res}")
+            print(f"  [❌] Invalid Token response: {res}")
     except Exception as e: 
-        print(f"  Request failed: {e}")
+        print(f"  [❌ FB Auth] Request failed: {e}")
     return None
 
 # ==========================================
 # WORKER 0: SCREENSHOT CAPTURE
 # ==========================================
 def worker_0_capture_frame(data, output_img):
-    print(f"\n Capturing a single frame from live stream...")
-    headers_cmd = f"User-Agent: {data}\r\nReferer: {data}\r\nCookie: {data}"
-    cmd =, '-vframes', '1', '-q:v', '2', output_img]
+    print(f"\n[📸 Worker 0] Capturing a single frame from live stream...")
+    headers_cmd = f"User-Agent: {data['ua']}\r\nReferer: {data['referer']}\r\nCookie: {data['cookie']}"
     
-    print(f"  Running FFmpeg command to save '{output_img}'...")
+    # [✅ FIX] cmd list is now fully complete
+    cmd = ['ffmpeg', '-y', '-headers', headers_cmd, '-i', data['url'], '-vframes', '1', '-q:v', '2', output_img]
+    
+    print(f"  [>] Running FFmpeg command to save '{output_img}'...")
     subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     
     if os.path.exists(output_img):
-        print(f" Screenshot captured successfully.")
+        print(f"[✅ Worker 0] Screenshot captured successfully.")
         return True
     else:
-        print(f" Failed to capture screenshot.")
+        print(f"[❌ Worker 0] Failed to capture screenshot.")
         return False
 
 # ==========================================
 # WORKER 1: VIDEO CAPTURE
 # ==========================================
 def worker_1_capture_video(data, filename, duration=10):
-    print(f"\n Capturing {duration} seconds of video from live stream...")
-    headers_cmd = f"User-Agent: {data}\r\nReferer: {data}\r\nCookie: {data}"
-    cmd =, '-t', str(duration), '-c', 'copy', '-bsf:a', 'aac_adtstoasc', filename]
+    print(f"\n[🎥 Worker 1] Capturing {duration} seconds of video from live stream...")
+    headers_cmd = f"User-Agent: {data['ua']}\r\nReferer: {data['referer']}\r\nCookie: {data['cookie']}"
     
-    print(f"  Running FFmpeg command to save '{filename}'...")
+    # [✅ FIX] cmd list is now fully complete
+    cmd = ['ffmpeg', '-y', '-headers', headers_cmd, '-i', data['url'], '-t', str(duration), '-c', 'copy', '-bsf:a', 'aac_adtstoasc', filename]
+    
+    print(f"  [>] Running FFmpeg command to save '{filename}'...")
     subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     
     if os.path.exists(filename):
-        print(f" Video chunk captured successfully.")
+        print(f"[✅ Worker 1] Video chunk captured successfully.")
         return True
     else:
-        print(f" Failed to capture video chunk.")
+        print(f"[❌ Worker 1] Failed to capture video chunk.")
         return False
 
 # ==========================================
 # WORKER 2: VIDEO EDITING
 # ==========================================
 def worker_2_edit_video(dynamic_vid, static_vid, custom_audio, output_vid):
-    print(f"\n Starting Video Editor Engine...")
+    print(f"\n[🎬 Worker 2] Starting Video Editor Engine...")
     try:
-        print(f"  Loading dynamic clip '{dynamic_vid}' and static clip '{static_vid}'...")
+        print(f"  [>] Loading dynamic clip '{dynamic_vid}' and static clip '{static_vid}'...")
         dyn_clip = VideoFileClip(dynamic_vid)
         stat_clip = VideoFileClip(static_vid)
         
-        print("  Resizing dynamic clip to match static clip...")
+        print("  [>] Resizing dynamic clip to match static clip...")
         dyn_clip = dyn_clip.resize(stat_clip.size)
 
         def blur(frame): 
             return np.array(Image.fromarray(frame).filter(ImageFilter.GaussianBlur(20)))
 
-        print("  Applying Gaussian Blur (radius 20) on dynamic clip...")
+        print("  [>] Applying Gaussian Blur (radius 20) on dynamic clip...")
         dyn_clip = dyn_clip.fl_image(blur)
         
-        print("  Concatenating (merging) clips...")
-        merged = concatenate_videoclips()
+        print("  [>] Concatenating (merging) clips...")
         
-        print(f"  Loading custom audio '{custom_audio}' and looping it...")
+        # [✅ FIX] concatenate_videoclips function call is now complete
+        merged = concatenate_videoclips([dyn_clip, stat_clip])
+        
+        print(f"  [>] Loading custom audio '{custom_audio}' and looping it...")
         audio = AudioFileClip(custom_audio)
         final_audio = afx.audio_loop(audio, duration=merged.duration)
         
-        print("  Setting final audio track on merged video...")
+        print("  [>] Setting final audio track on merged video...")
         final_video = merged.set_audio(final_audio)
 
-        print(f"  Rendering final video '{output_vid}' (Preset: ultrafast)...")
+        print(f"  [>] Rendering final video '{output_vid}' (Preset: ultrafast)...")
         final_video.write_videofile(output_vid, codec="libx264", audio_codec="aac", fps=stat_clip.fps, preset="ultrafast", logger=None)
         
-        print("  Closing resources and freeing memory...")
+        print("  [>] Closing resources and freeing memory...")
         dyn_clip.close(); stat_clip.close(); audio.close(); final_video.close()
-        print(" Video edited successfully.")
+        print("[✅ Worker 2] Video edited successfully.")
         return True
     except Exception as e: 
-        print(f" Editing Crashed: {e}")
+        print(f"[❌ Worker 2] Editing Crashed: {e}")
         return False
 
 # ==========================================
 # WORKER 3: 1-STEP FACEBOOK UPLOAD
 # ==========================================
 def worker_3_upload(video_path, page_id, title, desc, dynamic_thumb_path):
-    print(f"\n Preparing Facebook Upload (1-Step Method)...")
+    print(f"\n[📤 Worker 3] Preparing Facebook Upload (1-Step Method)...")
     url = f"https://graph-video.facebook.com/v18.0/{page_id}/videos"
     payload = {"title": title, "description": desc, "access_token": FB_ACCESS_TOKEN}
     
     files_to_open = []
     try:
-        print(f"  Opening video file '{video_path}'...")
+        print(f"  [>] Opening video file '{video_path}'...")
         f_vid = open(video_path, "rb")
         files_to_open.append(f_vid)
         files = {"source": ("video.mp4", f_vid, "video/mp4")}
         
-        print("  Checking for dynamic thumbnail...")
+        print("  [>] Checking for dynamic thumbnail...")
         if dynamic_thumb_path and os.path.exists(dynamic_thumb_path):
-            print(f"  Thumbnail '{dynamic_thumb_path}' found! Opening file...")
+            print(f"  [>] Thumbnail '{dynamic_thumb_path}' found! Opening file...")
             f_thumb = open(dynamic_thumb_path, "rb")
             files_to_open.append(f_thumb)
-            print("  Attaching thumbnail as 'image/png' to payload...")
-            files = (os.path.basename(dynamic_thumb_path), f_thumb, "image/png")
+            print("  [>] Attaching thumbnail as 'image/png' to payload...")
+            files["thumb"] = (os.path.basename(dynamic_thumb_path), f_thumb, "image/png")
         else:
-            print(f"  No dynamic thumbnail found. Proceeding without thumbnail.")
+            print(f"  [⚠️] No dynamic thumbnail found. Proceeding without thumbnail.")
 
-        print("  Sending POST request to Facebook Graph API...")
+        print("  [>] Sending POST request to Facebook Graph API...")
         res = requests.post(url, data=payload, files=files).json()
         
         if "id" in res:
-            print(f" Video & Thumbnail Upload SUCCESS! (Post ID: {res})")
+            print(f"[✅ Worker 3] Video & Thumbnail Upload SUCCESS! (Post ID: {res['id']})")
             
-            print("  Waiting 15 seconds for FB processing before dropping comment...")
+            print("  [⏳] Waiting 15 seconds for FB processing before dropping comment...")
             time.sleep(15) 
             
-            print("  Posting promotional comment...")
-            comment_url = f"https://graph.facebook.com/v18.0/{res}/comments"
+            print("  [>] Posting promotional comment...")
+            comment_url = f"https://graph.facebook.com/v18.0/{res['id']}/comments"
             comment_text = f"📺 Watch Full Match Without Buffering Here: https://bulbul4u-live.xyz"
             
             comment_img_path = "comment_image.jpeg" 
             if os.path.exists(comment_img_path):
-                print("  Comment image found, attaching to comment...")
+                print("  [>] Comment image found, attaching to comment...")
                 with open(comment_img_path, "rb") as img:
                     requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN}, files={"source": img})
-                print(" Photo Comment Placed.")
+                print("[✅ Worker 3] Photo Comment Placed.")
             else:
-                print("  Comment image NOT found, posting text-only comment...")
+                print("  [>] Comment image NOT found, posting text-only comment...")
                 requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN})
-                print(" Text Comment Placed.")
+                print("[✅ Worker 3] Text Comment Placed.")
             return True
         else:
-             print(f" API Error from Facebook: {res}")
+             print(f"[❌ Worker 3] API Error from Facebook: {res}")
              return False
              
     except Exception as e:
-        print(f" Upload Crash: {e}")
+        print(f"[💥 Worker 3] Upload Crash: {e}")
         return False
     finally:
-        print("  Closing file pointers...")
+        print("  [>] Closing file pointers...")
         for f in files_to_open: f.close()
 
 # ==========================================
@@ -425,22 +431,22 @@ def main():
     
     page_id = get_page_id()
     if not page_id: 
-        print(" Failed to get Page ID. Exiting.")
+        print("[🛑 System] Failed to get Page ID. Exiting.")
         return 
 
     data = get_link_with_headers()
     if not data: 
-        print(" Failed to get initial M3U8 link. Exiting.")
+        print("[🛑 System] Failed to get initial M3U8 link. Exiting.")
         return 
         
-    expiry_dt = calculate_expiry_time(data)
+    expiry_dt = calculate_expiry_time(data['url'])
     clip_counter = 1
     next_run_triggered = False
     
     static_video = "main_video.mp4"
     audio_file = "marya_live.mp3"
     
-    print("\n Beginning Main Loop...")
+    print("\n[⚙️ System] Beginning Main Loop...")
     while True:
         elapsed_time = time.time() - START_TIME
         current_time = datetime.now(PKT)
@@ -448,31 +454,31 @@ def main():
         
         print(f"\n" + "-"*50)
         print(f"--- 🔄 STARTING VIDEO CYCLE #{clip_counter} ---")
-        print(f"  Bot Uptime: {int(elapsed_time/60)} minutes")
-        print(f"  Link Time Remaining: {int(time_left_seconds/60)} minutes")
+        print(f"  [-] Bot Uptime: {int(elapsed_time/60)} minutes")
+        print(f"  [-] Link Time Remaining: {int(time_left_seconds/60)} minutes")
         print("-" * 50)
         
-        print("  Checking Relay Race logic...")
+        print("  [>] Checking Relay Race logic...")
         if elapsed_time > RESTART_TRIGGER_TIME and not next_run_triggered:
-            print("  Trigger time reached! Executing handoff...")
+            print("  [🚨] Trigger time reached! Executing handoff...")
             trigger_next_run()
             next_run_triggered = True 
             
-        print("  Checking Suicide limits...")
+        print("  [>] Checking Suicide limits...")
         if elapsed_time > END_TIME_LIMIT: 
-            print(" Max Lifetime Reached. Exiting script gracefully.")
+            print("[🛑 System] Max Lifetime Reached. Exiting script gracefully.")
             break
         
-        print("  Checking link expiry...")
+        print("  [>] Checking link expiry...")
         if time_left_seconds <= 120:
-            print("  Link is expiring soon! Pausing to fetch new link...")
+            print("  [🚨] Link is expiring soon! Pausing to fetch new link...")
             new_data = get_link_with_headers()
             if new_data:
-                print("  New link acquired.")
+                print("  [✅] New link acquired.")
                 data = new_data
-                expiry_dt = calculate_expiry_time(data)
+                expiry_dt = calculate_expiry_time(data['url'])
             else:
-                print("   Failed to get new link. Retrying in 60 seconds...")
+                print("  [⚠️] Failed to get new link. Retrying in 60 seconds...")
                 time.sleep(60); continue 
         
         title, desc = generate_unique_metadata(clip_counter)
@@ -483,7 +489,7 @@ def main():
         final_vid = f"final_{clip_counter}.mp4"
         
         # 🔗 HYBRID ACTION FLOW
-        print("\n Executing the Hybrid Action Flow...")
+        print("\n[⚡ Flow] Executing the Hybrid Action Flow...")
         
         if worker_0_capture_frame(data, raw_frame):
             if worker_0_5_generate_thumbnail(raw_frame, title, generated_thumb):
@@ -491,21 +497,23 @@ def main():
                     if worker_2_edit_video(raw_vid, static_video, audio_file, final_vid):
                         worker_3_upload(final_vid, page_id, title, desc, generated_thumb)
                     else:
-                        print("  Worker 2 (Edit) failed.")
+                        print("  [❌ Flow Broken] Worker 2 (Edit) failed.")
                 else:
-                    print("  Worker 1 (Video Capture) failed.")
+                    print("  [❌ Flow Broken] Worker 1 (Video Capture) failed.")
             else:
-                print("  Worker 0.5 (Thumbnail Gen) failed.")
+                print("  [❌ Flow Broken] Worker 0.5 (Thumbnail Gen) failed.")
         else:
-            print("  Worker 0 (Screenshot) failed.")
+            print("  [❌ Flow Broken] Worker 0 (Screenshot) failed.")
         
-        print("\n Running Garbage Collector...")
-        for temp_file in:
+        print("\n[🧹 Cleanup] Running Garbage Collector...")
+        
+        # [✅ FIX] temp_file list is now fully complete
+        for temp_file in [raw_frame, generated_thumb, raw_vid, final_vid]:
             if os.path.exists(temp_file): 
                 os.remove(temp_file)
-                print(f"  Deleted: {temp_file}")
+                print(f"  [-] Deleted: {temp_file}")
             
-        print(f"\n Cycle #{clip_counter} Complete. Waiting {WAIT_TIME_SECONDS} seconds before next run...")
+        print(f"\n[⏳ Cycle End] Cycle #{clip_counter} Complete. Waiting {WAIT_TIME_SECONDS} seconds before next run...")
         clip_counter += 1
         time.sleep(WAIT_TIME_SECONDS)
 
