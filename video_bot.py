@@ -1,3 +1,4 @@
+import mimetypes # MIME type logic ko use karne ke liye
 import os
 import time
 import subprocess
@@ -6,8 +7,6 @@ import traceback
 import requests
 import random 
 import numpy as np
-import base64
-from html2image import Html2Image
 from PIL import Image, ImageFilter
 
 # ==========================================
@@ -16,6 +15,7 @@ from PIL import Image, ImageFilter
 print("[*] Checking Pillow version and applying Superman Patch if needed...")
 if not hasattr(Image, 'ANTIALIAS'):
     Image.ANTIALIAS = Image.LANCZOS
+    print("[✅] Superman Patch Applied: ANTIALIAS redirected to LANCZOS.")
 
 from datetime import datetime, timezone, timedelta
 from seleniumwire import webdriver
@@ -24,6 +24,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 
 # MoviePy for Video Editing
+print("[*] Loading MoviePy modules...")
 from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
 import moviepy.audio.fx.all as afx
 
@@ -34,10 +35,14 @@ print("\n[*] Initializing Settings and Environment Variables...")
 TARGET_WEBSITE = os.environ.get('TARGET_URL', '').strip()
 FB_ACCESS_TOKEN = os.environ.get('FB_ACCESS_TOKEN', '').strip()
 
-TITLES_INPUT = os.environ.get('TITLES_LIST', 'Live Match Today,,SA vs PAK T20 LEAGUE').strip()
-DESCS_INPUT = os.environ.get('DESCS_LIST', 'Watch the live action here').strip()
-HASHTAGS = os.environ.get('HASHTAGS', '#LiveMatch').strip()
+# ⚠️ YAHAN GITHUB SE DYNAMIC ARRAYS AAYENGE
+TITLES_INPUT = os.environ.get('TITLES_LIST', 'Live Match Today,,Watch Full Match DC vs GT,,Blockbuster IPL Showdown').strip()
+DESCS_INPUT = os.environ.get('DESCS_LIST', 'DC take on GT in the latest IPL match. Watch the live action here without buffer,,The best IPL teams DC and GT face off. Click the link in comments for full buffer-free stream,,DC vs GT is a high-voltage clash. Witness every boundary and wicket. Full buffer-free stream details in comments! 👇').strip()
+HASHTAGS = os.environ.get('HASHTAGS', '#IPL2026 #DCvsGT #DelhiCapitals #GujaratTitans #IPLLive #TataIPL #T20Cricket #CricketLovers #LiveMatch').strip()
 
+# NOTE: THUMBNAIL_IMAGE_NAME yahan ignore ho jayega kyunke hum stream se dynamic image capture kar rahe hain
+
+# Proxy Settings
 PROXY_IP = os.environ.get('PROXY_IP', '31.59.20.176')
 PROXY_PORT = os.environ.get('PROXY_PORT', '6754')
 PROXY_USER = os.environ.get('PROXY_USER', 'ehhppbec')
@@ -46,130 +51,105 @@ PROXY_URL = f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}"
 
 PKT = timezone(timedelta(hours=5))
 WAIT_TIME_SECONDS = 300  
+print(f"[*] System Timezone set to PKT (+5).")
+print(f"[*] Loop Wait Time set to {WAIT_TIME_SECONDS} seconds.")
+
+# Relay Race Timers
 START_TIME = time.time()
 RESTART_TRIGGER_TIME = (5 * 60 * 60) + (30 * 60) 
 END_TIME_LIMIT = (5 * 60 * 60) + (50 * 60) 
 
 # ==========================================
-# 🌐 HTML2IMAGE THUMBNAIL ENGINE (PROJECT 5)
-# ==========================================
-# Added Linux/GitHub Actions safe flags for headless chrome
-hti = Html2Image(size=(1280, 1000), custom_flags=['--hide-scrollbars', '--no-sandbox', '--disable-gpu'])
-
-def get_image_base64(image_path):
-    with open(image_path, "rb") as img_file:
-        b64_string = base64.b64encode(img_file.read()).decode('utf-8')
-        ext = image_path.split('.')[-1].lower()
-        if ext == 'png': return f"data:image/png;base64,{b64_string}"
-        else: return f"data:image/jpeg;base64,{b64_string}"
-
-def worker_0_5_generate_thumbnail(central_image_path, match_name_text, output_image_path):
-    print(f"\n[🖼️ Worker 0.5] Rendering Studio Thumbnail for: {match_name_text}...")
-    if not os.path.exists(central_image_path): return False
-    try:
-        b64_image = get_image_base64(central_image_path)
-        html_code = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700;900&display=swap');
-                body {{ margin: 0; padding: 0; width: 1280px; height: 1000px; background-color: #0f0f0f; font-family: 'Roboto', sans-serif; color: white; display: flex; flex-direction: column; overflow: hidden; }}
-                .header {{ height: 120px; display: flex; align-items: center; padding: 0 40px; justify-content: space-between; z-index: 10; }}
-                .logo-container {{ display: flex; align-items: center; gap: 20px; }}
-                .hamburger {{ display: flex; flex-direction: column; gap: 6px; }}
-                .hamburger div {{ width: 40px; height: 6px; background: white; }}
-                .logo {{ font-size: 55px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.6); }}
-                .live-badge {{ border: 4px solid #cc0000; border-radius: 12px; padding: 5px 20px; font-size: 45px; font-weight: 700; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 15px rgba(204,0,0,0.4); }}
-                .dot {{ color: #cc0000; text-shadow: 0 0 10px #cc0000; }}
-                .hero-container {{ position: relative; width: 100%; height: 600px; }}
-                .hero-img {{ width: 100%; height: 100%; object-fit: cover; }}
-                .gradient-fade {{ position: absolute; bottom: 0; width: 100%; height: 150px; background: linear-gradient(to bottom, transparent, #0f0f0f); }}
-                .pip-img {{ position: absolute; top: 40px; right: 40px; width: 50%; border: 6px solid white; box-shadow: -15px 15px 30px rgba(0,0,0,0.8); }}
-                .text-container {{ flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px 40px; }}
-                .main-title {{ font-size: 100px; font-weight: 900; line-height: 1.1; text-shadow: 6px 6px 15px rgba(0,0,0,0.9); }}
-                .live-text {{ color: #cc0000; text-shadow: 6px 6px 15px rgba(0,0,0,0.9), 0 0 15px rgba(204,0,0,0.8), 0 0 30px rgba(204,0,0,0.5); }}
-                .match-text {{ color: white; }}
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <div class="logo-container"><div class="hamburger"><div></div><div></div><div></div></div><div class="logo">SPORTSHUB</div></div>
-                <div class="live-badge"><span class="dot">●</span> LIVE</div>
-            </div>
-            <div class="hero-container">
-                <img src="{b64_image}" class="hero-img">
-                <div class="gradient-fade"></div> 
-                <img src="{b64_image}" class="pip-img">
-            </div>
-            <div class="text-container">
-                <div class="main-title"><span class="live-text">LIVE NOW: </span><span class="match-text">{match_name_text}</span></div>
-            </div>
-        </body>
-        </html>
-        """
-        hti.screenshot(html_str=html_code, save_as=output_image_path)
-        print(f"[✅] Thumbnail Ready: {output_image_path}")
-        return True
-    except Exception as e:
-        print(f"[❌] Thumbnail Gen Error: {e}")
-        return False
-
-# ==========================================
-# 🧠 ANTI-SPAM METADATA
+# 🧠 ANTI-SPAM (DYNAMIC GITHUB INPUT ARRAY)
 # ==========================================
 def generate_unique_metadata(clip_number):
+    print(f"\n[🧠] Generating Array-Based Metadata for Clip #{clip_number}...")
+    
+    # 1. Input ko ',,' se tod kar Array banana
     all_titles = [t.strip() for t in TITLES_INPUT.split(',,') if t.strip()]
     all_descriptions = [d.strip() for d in DESCS_INPUT.split(',,') if d.strip()]
     
+    # Fallback agar user form khali chhor de
     if not all_titles: all_titles = ["Live Match Today"]
     if not all_descriptions: all_descriptions = ["Watch the live stream action now!"]
     
+    # 2. Random Pick (Bot 100 mein se 1 uthayega)
     chosen_base_title = random.choice(all_titles)
     chosen_desc_body = random.choice(all_descriptions)
     
-    chosen_title = f"{chosen_base_title}" 
-    if len(chosen_title) > 250: chosen_title = chosen_title[:247] + "..."
+    # chosen_title = f"{chosen_base_title} - {dynamic_suffix}"
+    chosen_title = f"{chosen_base_title}" # Keeping only the base dynamic title
+    
+    # ✂️ THE SMART TRIMMER (Facebook API Byte Limit Fix - User requested 250 character limit)
+    if len(chosen_title) > 250:
+        print(f"[⚠️] Title lamba tha. Safe size par trim kar raha hoon...")
+        chosen_title = chosen_title[:247] + "..."
         
+    # 3. Emojis (Sirf Description ke liye)
     emojis = ["🔥", "🏏", "⚡", "🏆", "💥", "😱", "📺", "🚀"]
     emo = random.sample(emojis, 3) 
     current_time = datetime.now(PKT).strftime("%I:%M %p")
 
+    # 4. HASHTAGS LOGIC (Sirf 4 Random Hashtags)
     tags_list = HASHTAGS.split() 
     random.shuffle(tags_list)    
     selected_4_tags = " ".join(tags_list[:4]) 
     
+    # 5. Description Generator (Title -> Emojis -> Desc -> Tags)
     final_description = f"{chosen_title} {emo[0]} {emo[1]} {emo[2]}\n\n{chosen_desc_body}\n\n⏱️ Update: {current_time} | Clip #{clip_number}\n\n👇 Watch Full Match Link in First Comment!\n\n{selected_4_tags}"
+    
+    print(f"  --> Total Titles Loaded: {len(all_titles)}")
+    print(f"  --> Selected Title (No Emojis): {chosen_title}")
+    print(f"  --> 4 Hashtags Used: {selected_4_tags}")
+    
     return chosen_title, final_description
 
 # ==========================================
 # 🔄 RELAY RACE (AUTO RESTART)
 # ==========================================
 def trigger_next_run():
+    print("\n" + "="*50)
+    print(" ⏰ RELAY RACE: STARTING NEXT GITHUB BOT ⏰")
+    print("="*50)
     token = os.environ.get('GH_PAT')
     repo = os.environ.get('GITHUB_REPOSITORY') 
     branch = os.environ.get('GITHUB_REF_NAME', 'main')
+    
+    print(f"[*] Preparing API Request for Repo: {repo}, Branch: {branch}...")
     url = f"https://api.github.com/repos/{repo}/actions/workflows/video_loop.yml/dispatches"
     headers = {"Accept": "application/vnd.github.v3+json", "Authorization": f"token {token}"}
     
+    # NOTE: THUMBNAIL_IMAGE_NAME is no longer passed dynamically since it's dynamic
     data = {
         "ref": branch,
         "inputs": {
             "target_url": TARGET_WEBSITE,
-            "proxy_ip": PROXY_IP, "proxy_port": PROXY_PORT,
-            "proxy_user": PROXY_USER, "proxy_pass": PROXY_PASS,
-            "titles_list": TITLES_INPUT, "descs_list": DESCS_INPUT, "hashtags": HASHTAGS
+            "proxy_ip": PROXY_IP, 
+            "proxy_port": PROXY_PORT,
+            "proxy_user": PROXY_USER, 
+            "proxy_pass": PROXY_PASS,
+            "titles_list": TITLES_INPUT, 
+            "descs_list": DESCS_INPUT, 
+            "hashtags": HASHTAGS,
+            "thumbnail_image_name": "" # Setting it to empty for next run to signify dynamic thumbnail
         }
     }
     try:
+        print("[*] Sending dispatch trigger to GitHub API...")
         res = requests.post(url, headers=headers, json=data)
-        if res.status_code == 204: print("[✅] SUCCESS! Naya Bot Start Ho Gaya Hai!")
-    except: pass
+        if res.status_code == 204: 
+            print("[✅] SUCCESS! Naya Bot Background Mein Start Ho Gaya Hai!")
+        else:
+            print(f"[⚠️] Unexpected Status Code: {res.status_code} - {res.text}")
+    except Exception as e:
+        print(f"[💥] Relay Race Failed: {e}")
 
 # ==========================================
-# STEP 1: SELENIUM LINK CHURANA
+# STEP 1: LINK CHURANA
 # ==========================================
 def get_link_with_headers():
+    print(f"\n[🔍] Starting Selenium Webdriver with Proxy...")
+    print(f"[*] Target URL: {TARGET_WEBSITE}")
     options = webdriver.ChromeOptions()
     options.add_argument('--headless=new') 
     options.add_argument('--no-sandbox')
@@ -179,120 +159,347 @@ def get_link_with_headers():
 
     driver = None; data = None
     try:
+        print("[*] Initializing ChromeDriverManager...")
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), seleniumwire_options=seleniumwire_options, options=options)
+        
+        print("[*] Loading Website...")
         driver.get(TARGET_WEBSITE)
+        
+        print("[⏳] Waiting 5 seconds for page load and Cloudflare bypass...")
         time.sleep(5)
+        
+        print("[*] Scanning Network Requests for .m3u8 token...")
         for request in driver.requests:
             if request.response and ".m3u8" in request.url:
                 data = {"url": request.url, "ua": request.headers.get('User-Agent', ''), "cookie": request.headers.get('Cookie', ''), "referer": request.headers.get('Referer', TARGET_WEBSITE)}
+                print(f"🎉 [BINGO] M3U8 Link Bypassed & Captured!")
+                print(f"  --> Found URL: {request.url[:80]}...") 
                 break
-    except: pass
+                
+        if not data:
+            print("[⚠️] M3U8 link NOT found in network requests.")
+            
+    except Exception as e: 
+        print(f"[💥] Selenium Error: {e}")
     finally:
-        if driver: driver.quit()
+        if driver: 
+            print("[*] Closing Chrome browser and releasing proxy...")
+            driver.quit()
     return data
 
 def calculate_expiry_time(url):
+    print("[*] Calculating Link Expiry Time...")
     try:
         params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
         exp = int(params.get('expires', params.get('e', [0]))[0])
-        if exp: return datetime.fromtimestamp(exp, PKT)
-    except: pass
-    return datetime.now(PKT) + timedelta(hours=2)
+        if exp: 
+            exp_time = datetime.fromtimestamp(exp, PKT)
+            print(f"[⏰] Link will expire at: {exp_time.strftime('%I:%M:%S %p PKT')}")
+            return exp_time
+    except Exception as e: 
+        print(f"[-] Could not parse expiry: {e}")
+        pass
+    
+    fallback_time = datetime.now(PKT) + timedelta(hours=2)
+    print(f"[⚠️] Setting Fallback Expiry Time: {fallback_time.strftime('%I:%M:%S %p PKT')}")
+    return fallback_time
 
 def get_page_id():
+    print("[*] Verifying Facebook Access Token...")
     try:
         res = requests.get("https://graph.facebook.com/v18.0/me", params={"access_token": FB_ACCESS_TOKEN, "fields": "id,name"}).json()
-        if 'id' in res: return res.get('id')
-    except: pass
+        if 'id' in res:
+            print(f"[+] Connected successfully to Page: {res.get('name', 'Unknown')} (ID: {res['id']})")
+            return res.get('id')
+        else:
+            print(f"[-] API Response error: {res}")
+    except Exception as e: 
+        print(f"[💥] Token Check Error: {e}")
     return None
 
 # ==========================================
-# WORKER 0: SCREENSHOT CAPTURE (NEW)
+# Worker 0: SCREENSHOT CAPTURE FROM STREAM (NEW)
 # ==========================================
 def worker_0_capture_frame(data, output_img):
-    print(f"\n[📸 Worker 0] Capturing screenshot from live stream...")
+    print(f"\n[📸 Worker 0] Capturing fresh frame for professional thumbnail...")
     headers_cmd = f"User-Agent: {data['ua']}\r\nReferer: {data['referer']}\r\nCookie: {data['cookie']}"
-    # Extracts exactly 1 frame from the live stream
+    # FFMPEG command to extract exactly 1 frame from the stream
     cmd = ['ffmpeg', '-y', '-headers', headers_cmd, '-i', data['url'], '-vframes', '1', '-q:v', '2', output_img]
+    
+    print("[*] Executing FFmpeg capture command...")
     subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return os.path.exists(output_img)
+    
+    if os.path.exists(output_img):
+        print(f"[✅ Worker 0] Fresh frame captured! Saved as '{output_img}'.")
+        return True
+    else:
+        print(f"[❌ Worker 0] Frame capture failed! Path: {output_img}")
+        return False
 
 # ==========================================
-# WORKER 1: VIDEO CAPTURE
+# 🎨 DYNAMIC PROFESSIONAL THUMBNAIL GENERATOR (PROJECT 5 LOGIC)
+# ==========================================
+# design parameters matching nomenclatures
+CANVAS_WIDTH = 1280
+CANVAS_HEIGHT = 1280
+WHITE = (255, 255, 255)
+DEEP_RED = (204, 0, 0)
+BLACK = (0, 0, 0)
+FONT_PATH_BOLD = "ArialBold.ttf"  # professional bold font
+FONT_PATH_REGULAR = "Arial.ttf" # professional regular font
+
+def worker_generate_professional_thumbnail(central_image_path, match_name_text, output_image_path):
+    print(f"\n[🎨] Creating deep analysis professional image design (PROJECT 5) for: {match_name_text}...")
+    
+    # local assets and nomenclature checks
+    if not os.path.exists(central_image_path):
+        print(f"[❌] FATAL: Captured frame '{central_image_path}' not found. Cannot proceed.")
+        return False
+    if not os.path.exists(FONT_PATH_BOLD) or not os.path.exists(FONT_PATH_REGULAR):
+        print(f"[⚠️] WARNING: Font files not found. design replica WILL fail or use default.")
+        return False
+
+    try:
+        # Step 1: Base black canvas replica creation
+        canvas = Image.new('RGB', (CANVAS_WIDTH, CANVAS_HEIGHT), color=BLACK)
+        draw = ImageDraw.Draw(canvas)
+
+        # Step 2: design Top Professional black Bar (`TOP BAR`)
+        top_bar_h = int(CANVAS_HEIGHT * 0.08) # 8% height replica
+        draw.rectangle([0, 0, CANVAS_WIDTH, top_bar_h], fill=BLACK)
+
+        # Step 3: design Header Nomenclature Content (logo and LIVE icon)
+        logo_font_size = int(top_bar_h * 0.5)
+        logo_font = ImageFont.truetype(FONT_PATH_BOLD, logo_font_size)
+        logo_y = (top_bar_h - logo_font_size) // 2 
+        draw.text((40, logo_y), "SPORTSHUB", font=logo_font, fill=WHITE)
+        
+        # design glowing LIVE icon tag
+        live_font_size = int(top_bar_h * 0.4)
+        live_font = ImageFont.truetype(FONT_PATH_REGULAR, live_font_size)
+        live_text = "● LIVE"
+        live_w = draw.textlength(live_text, font=live_font)
+        live_x = CANVAS_WIDTH - int(live_w) - 40
+        live_y = (top_bar_h - live_font_size) // 2
+        # specific nomenclature hierarchy color design
+        draw.text((live_x, live_y), "● ", font=live_font, fill=DEEP_RED)
+        draw.text((live_x + int(live_font.getlength("● ")), live_y), "LIVE", font=live_font, fill=WHITE)
+
+        # Step 4: design Bottom Center Text Nomenclature Bar (`BOTTOM BAR`)
+        bottom_bar_h = int(CANVAS_HEIGHT * 0.18) # 18% height replica
+        bottom_bar_y = CANVAS_HEIGHT - bottom_bar_h
+        draw.rectangle([0, bottom_bar_y, CANVAS_WIDTH, CANVAS_HEIGHT], fill=BLACK)
+
+        # Step 5: design Dual Layer Thumbnail Structure (The core professional design)
+        # Load captured frame for dual layers
+        with Image.open(central_image_path) as user_image:
+            central_h = CANVAS_HEIGHT - top_bar_h - bottom_bar_h
+            central_start_y = top_bar_h
+
+            # --- design DUAL LAYER 1: Full-Central Blurry Background ---
+            print("[*] design DUAL LAYER 1: Blurred Central Background...")
+            bg_image = user_image.copy()
+            bg_image.thumbnail((CANVAS_WIDTH, central_h))
+            bg_pos_x = (CANVAS_WIDTH - bg_image.width) // 2
+            bg_pos_y = central_start_y + ((central_h - bg_image.height) // 2)
+            # design strong Gaussian blur replica
+            blurred_bg = bg_image.filter(ImageFilter.GaussianBlur(18))
+            canvas.paste(blurred_bg, (bg_pos_x, bg_pos_y))
+
+            # --- design DUAL LAYER 2: Right-Focused Content Box ---
+            print("[*] design DUAL LAYER 2: Focused Content Box on right...")
+            focused_box_w = int(CANVAS_WIDTH * 0.45) # specific 45% width replica
+            focused_box_h = int(central_h * 0.45) # 45% height replica
+            
+            focused_image = user_image.copy()
+            focused_image.thumbnail((focused_box_w, focused_box_h))
+            
+            # focused content box specific nomenclature position
+            focused_box_x = int(CANVAS_WIDTH * 0.52) # 52% X position replica
+            focused_box_y = central_start_y + int(central_h * 0.52) # 52% Y position replica
+            
+            # paste focused content box and design white border
+            canvas.paste(focused_image, (focused_box_x, focused_box_y))
+            draw.rectangle([focused_box_x - 4, focused_box_y - 4, focused_box_x + focused_image.width + 4, focused_box_y + focused_image.height + 4], outline=WHITE, width=8)
+
+        # Step 6: design Bottom Center Text Nomenclature Hierarchy
+        print("[*] design Bottom Text Nomenclature Hierarchy Hierarchy replica...")
+        try:
+            # CENTER Line 1 design: "LIVE NOW: [Match Name]"
+            # main nomenclature uses special hierarchy colors
+            main_font_size = int(bottom_bar_h * 0.35)
+            main_text_font = ImageFont.truetype(FONT_PATH_BOLD, main_font_size)
+            static_prefix = "LIVE NOW:"
+            full_main_text = f"{static_prefix} {match_name_text}"
+            
+            full_main_w = draw.textlength(full_main_text, font=main_text_font)
+            text_pos_x = (CANVAS_WIDTH - int(full_main_w)) // 2
+            text_pos_y = bottom_bar_y + int(bottom_bar_h * 0.15) 
+            
+            # specific nomenclature hierarchy design colors
+            draw.text((text_pos_x, text_pos_y), static_prefix, font=main_text_font, fill=DEEP_RED)
+            draw.text((text_pos_x + int(main_text_font.getlength(static_prefix + " ")), text_pos_y), match_name_text, font=main_text_font, fill=WHITE)
+            
+            # CENTER Line 2 design: Static Server Text
+            # Uses regular weight font hierarchy design
+            server_font_size = int(bottom_bar_h * 0.18)
+            server_font = ImageFont.truetype(FONT_PATH_REGULAR, server_font_size)
+            server_text = "(SERVER 1)"
+            server_w = draw.textlength(server_text, font=server_font)
+            server_x = (CANVAS_WIDTH - int(server_w)) // 2
+            # centered nomenclature position replica
+            server_y = text_pos_y + main_font_size + 15
+            draw.text((server_x, server_y), server_text, font=server_font, fill=WHITE)
+            
+            # CENTER Line 3 design: Smallest Static centered Text
+            # Uses regular font weight, centered replica design
+            bottom_font_size = int(bottom_bar_h * 0.12)
+            bottom_font = ImageFont.truetype(FONT_PATH_REGULAR, bottom_font_size)
+            bottom_text = "DEKHO ABHI! LIVE MATCH KA MAZA LO."
+            bottom_w = draw.textlength(bottom_text, font=bottom_font)
+            bottom_x = (CANVAS_WIDTH - int(bottom_w)) // 2
+            # anchored to bottom center nomenclature replica design
+            bottom_y = CANVAS_HEIGHT - bottom_font_size - 20
+            draw.text((bottom_x, bottom_y), bottom_text, font=bottom_font, fill=WHITE)
+
+        except Exception as e:
+            print(f"[⚠️] WARNING: Failed to draw text on nomenclature bar: {e}")
+
+        # Step 7: design deep analysis replica image rendering
+        print(f"[*] design deeply analyzed replica image design saving to: {output_image_path}")
+        canvas.save(output_image_path)
+        
+        print(f"[✅] dynamic professional thumbnail design Completed! file saved at: {output_image_path}")
+        return True
+
+    except Exception as e:
+        print(f"[❌] Error during dynamic thumbnail design creation: {e}")
+        return False
+
+# ==========================================
+# WORKER 1: 10 SECONDS VIDEO CAPTURE
 # ==========================================
 def worker_1_capture_video(data, filename, duration=10):
     print(f"\n[🎥 Worker 1] Initiating Stream Capture...")
+    print(f"[*] Target File: {filename} | Duration: {duration} seconds")
     headers_cmd = f"User-Agent: {data['ua']}\r\nReferer: {data['referer']}\r\nCookie: {data['cookie']}"
     cmd = ['ffmpeg', '-y', '-headers', headers_cmd, '-i', data['url'], '-t', str(duration), '-c', 'copy', '-bsf:a', 'aac_adtstoasc', filename]
+    
+    print("[*] Executing FFmpeg capture command...")
     subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return os.path.exists(filename)
+    
+    if os.path.exists(filename):
+        print(f"[✅ Worker 1] Capture successful! File saved.")
+        return True
+    else:
+        print(f"[❌ Worker 1] Capture failed! File not created.")
+        return False
 
 # ==========================================
-# WORKER 2: VIDEO EDITING
+# WORKER 2: VIDEO EDITING (Blur + Merge + Audio)
 # ==========================================
 def worker_2_edit_video(dynamic_vid, static_vid, custom_audio, output_vid):
-    print(f"\n[🎬 Worker 2] Starting Video Editing Engine...")
+    print(f"\n[🎬 Worker 2] Starting Video Editing Engine (MoviePy)...")
     try:
+        print(f"[*] Loading Dynamic Clip: {dynamic_vid}")
         dyn_clip = VideoFileClip(dynamic_vid)
+        
+        print(f"[*] Loading Static Clip: {static_vid}")
         stat_clip = VideoFileClip(static_vid)
+        
+        print(f"[*] Resizing dynamic clip to match static clip size: {stat_clip.size}")
         dyn_clip = dyn_clip.resize(stat_clip.size)
 
         def blur(frame):
             return np.array(Image.fromarray(frame).filter(ImageFilter.GaussianBlur(20)))
 
+        print("[*] Applying Gaussian Blur (Radius: 20) to dynamic clip...")
         dyn_clip = dyn_clip.fl_image(blur)
+        
+        print("[*] Concatenating (Merging) dynamic and static clips...")
         merged = concatenate_videoclips([dyn_clip, stat_clip])
         
+        print(f"[*] Loading Custom Audio: {custom_audio} and looping to match video duration...")
         audio = AudioFileClip(custom_audio)
         final_audio = afx.audio_loop(audio, duration=merged.duration)
+        
+        print("[*] Setting final audio track...")
         final_video = merged.set_audio(final_audio)
 
+        print(f"[*] Rendering Final Video to: {output_vid}")
         final_video.write_videofile(output_vid, codec="libx264", audio_codec="aac", fps=stat_clip.fps, preset="ultrafast", logger=None)
 
+        print("[*] Closing resources and freeing up RAM...")
         dyn_clip.close(); stat_clip.close(); audio.close(); final_video.close()
+        
+        print("[✅ Worker 2] Editing Completed Successfully!")
         return True
-    except: return False
+    except Exception as e:
+        print(f"[❌] Edit Error: {e}")
+        return False
 
 # ==========================================
-# WORKER 3: 2-STEP FACEBOOK UPLOAD
+# WORKER 3: THE "2-STEP ATTACK" FACEBOOK UPLOAD
 # ==========================================
 def worker_3_upload(video_path, page_id, title, desc, thumb_path):
     print(f"\n[📤 Worker 3] Preparing Facebook Upload...")
     url = f"https://graph-video.facebook.com/v18.0/{page_id}/videos"
+    
+    # Payload now uses final metadata determined in main
     payload = {"title": title, "description": desc, "access_token": FB_ACCESS_TOKEN}
     
     try:
-        print(f"[*] Step 1: Uploading Video...")
+        print(f"[*] Step 1: Pushing pure video file '{video_path}' to Graph API...")
         with open(video_path, "rb") as f_vid:
             res = requests.post(url, data=payload, files={"source": ("video.mp4", f_vid, "video/mp4")}).json()
             
         if "id" in res:
             video_id = res['id']
-            print(f"[✅] Video Upload SUCCESS! (Post ID: {video_id})")
+            print(f"[✅ Worker 3] Video Upload SUCCESS! (Post ID: {video_id})")
             
+            # --- THE 2-STEP DYNAMIC THUMBNAIL ATTACK ---
+            # Now we use the newly generated dynamic thumbnail
             if thumb_path and os.path.exists(thumb_path):
-                print(f"[*] Step 2: Applying dynamically generated Studio Thumbnail...")
+                print(f"\n[*] Step 2: Forcing NEW Dynamic Studio Thumbnail ('{thumb_path}') onto Video ID: {video_id}...")
                 thumb_update_url = f"https://graph.facebook.com/v18.0/{video_id}"
+                
                 with open(thumb_path, "rb") as f_thumb:
                     thumb_res = requests.post(thumb_update_url, data={"access_token": FB_ACCESS_TOKEN}, files={"thumb": f_thumb}).json()
-                    if thumb_res.get("success"): print("[✅] Custom Studio Thumbnail Applied!")
+                    
+                    if thumb_res.get("success"):
+                        print("[✅] Dynamic Studio Thumbnail Set Successfully!")
+                    else:
+                        print(f"[⚠️] Facebook rejected the dynamic thumbnail. Reason: {thumb_res}")
+            else:
+                 print("[*] No dynamic thumbnail path provided. Skipping thumbnail step.")
 
-            # Comment Logic
+            # --- COMMENT LOGIC ---
+            print("\n[⏳] Waiting 15 seconds for Facebook to process the video before commenting...")
             time.sleep(15) 
-            comment_url = f"https://graph.facebook.com/v18.0/{video_id}/comments"
-            comment_text = f"📺 Watch Full Match Without Buffering Here: https://bulbul4u-live.xyz"
-            requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN})
-            print("[✅ Worker 3] Upload Workflow Complete.")
             
+            print("[💬 Worker 3] Preparing Comment with Link...")
+            comment_url = f"https://graph.facebook.com/v18.0/{res['id']}/comments"
+            comment_text = f"📺 Watch Full Match Without Buffering Here: https://bulbul4u-live.xyz"
+            
+            # Text-Only comment now due to workflow speed
+            requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN})
+            print("[✅ Worker 3] Text Comment Placed.")
+            
+            return True
+        else:
+             print(f"[❌ Worker 3] Facebook API Error: {res}")
+             return False
+             
     except Exception as e:
         print(f"[💥 Worker 3] Upload Crash: {e}")
+        return False
 
 # ==========================================
 # MAIN LOOP (THE BRAIN)
 # ==========================================
 def main():
     print("\n" + "="*50)
-    print("   🚀 ULTIMATE HYBRID CLOUD VIDEO BOT STARTED")
+    print("   🚀 ULTIMATE CLOUD VIDEO BOT STARTED")
     print("="*50)
     
     page_id = get_page_id()
@@ -321,7 +528,7 @@ def main():
             next_run_triggered = True 
             
         if elapsed_time > END_TIME_LIMIT:
-            print("\n[🛑] MAXIMUM LIFETIME REACHED. Exiting.")
+            print("\n[🛑] MAXIMUM LIFETIME REACHED. Exiting gracefully.")
             break
         
         if time_left_seconds <= 120:
@@ -332,28 +539,33 @@ def main():
             else:
                 time.sleep(60); continue 
         
-        # Determine Title before any generation
-        title, desc = generate_unique_metadata(clip_counter)
+        # 🔗 THE SMART HYBRID ACTION FLOW
         
-        raw_frame = f"live_frame_{clip_counter}.jpg"
-        generated_thumb = f"studio_thumb_{clip_counter}.png"
+        # 0. Generate final Title for Metadata AND Thumbnail design nomenclatures
+        final_title, final_desc = generate_unique_metadata(clip_counter)
+        
+        captured_frame = f"live_frame_{clip_counter}.jpg"
+        generated_studio_thumb = f"studio_thumb_{clip_counter}.png"
         raw_vid = f"raw_{clip_counter}.mp4"
         final_vid = f"final_{clip_counter}.mp4"
         
-        # 🔗 NEW HYBRID ACTION FLOW
-        if worker_0_capture_frame(data, raw_frame):
-            # Capture success -> Make Thumbnail
-            worker_0_5_generate_thumbnail(raw_frame, title, generated_thumb)
+        # Action Step 1: Capture Frame
+        if worker_0_capture_frame(data, captured_frame):
+            # Capture success -> Make Thumbnail design nomenclatures (PROJECT 5)
+            # This happens BEFORE video editing to save time
+            worker_generate_professional_thumbnail(captured_frame, final_title, generated_studio_thumb)
             
-            # Now Capture Video
+            # Action Step 2: Capture Video
             if worker_1_capture_video(data, raw_vid, duration=10):
+                # Action Step 3: Edit Video
                 if worker_2_edit_video(raw_vid, static_video, audio_file, final_vid):
-                    # Upload everything together
-                    worker_3_upload(final_vid, page_id, title, desc, generated_thumb)
+                    # Action Step 4: THE 2-STEP ATTACK UPLOAD
+                    # This now forces the NEW dynamic studio thumbnail
+                    worker_3_upload(final_vid, page_id, final_title, final_desc, generated_studio_thumb)
         
         # 🧹 GARBAGE COLLECTOR
         print("\n[🧹 Cleanup Engine Started]")
-        for temp_file in [raw_frame, generated_thumb, raw_vid, final_vid]:
+        for temp_file in [captured_frame, generated_studio_thumb, raw_vid, final_vid]:
             if os.path.exists(temp_file): 
                 os.remove(temp_file)
                 print(f"  [-] Deleted: {temp_file}")
