@@ -59,14 +59,14 @@ print("[✅ System] All Environment Variables Loaded.")
 # 🌐 HTML2IMAGE THUMBNAIL ENGINE (PROJECT 5)
 # ==========================================
 print("[⚙️ System] Initializing HTML2Image Engine for Thumbnails...")
-# ✨ THE FIX: Size changed to 1280x720 (Standard HD for Facebook Desktop) ✨
-hti = Html2Image(size=(1280, 720), custom_flags=['--hide-scrollbars', '--no-sandbox', '--disable-gpu'])
+hti = Html2Image(size=(1280, 1000), custom_flags=['--hide-scrollbars', '--no-sandbox', '--disable-gpu'])
 
 def get_image_base64(image_path):
     print(f"  [>] Converting image '{image_path}' to Base64 format...")
     with open(image_path, "rb") as img_file:
         b64_string = base64.b64encode(img_file.read()).decode('utf-8')
         ext = image_path.split('.')[-1].lower()
+        print(f"  [>] Conversion done. Extension detected: {ext}")
         if ext == 'png': return f"data:image/png;base64,{b64_string}"
         else: return f"data:image/jpeg;base64,{b64_string}"
 
@@ -80,34 +80,28 @@ def worker_0_5_generate_thumbnail(central_image_path, match_name_text, output_im
         
     try:
         b64_image = get_image_base64(central_image_path)
-        print("  [>] Generating HTML/CSS template (16:9 Format)...")
+        print("  [>] Generating HTML/CSS template...")
         
-        # ✨ THE FIX: CSS heights adjusted to fit perfectly in 720px height ✨
         html_code = f"""
         <!DOCTYPE html>
         <html>
         <head>
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700;900&display=swap');
-                body {{ margin: 0; padding: 0; width: 1280px; height: 720px; background-color: #0f0f0f; font-family: 'Roboto', sans-serif; color: white; display: flex; flex-direction: column; overflow: hidden; }}
-                .header {{ height: 100px; display: flex; align-items: center; padding: 0 40px; justify-content: space-between; z-index: 10; }}
+                body {{ margin: 0; padding: 0; width: 1280px; height: 1000px; background-color: #0f0f0f; font-family: 'Roboto', sans-serif; color: white; display: flex; flex-direction: column; overflow: hidden; }}
+                .header {{ height: 120px; display: flex; align-items: center; padding: 0 40px; justify-content: space-between; z-index: 10; }}
                 .logo-container {{ display: flex; align-items: center; gap: 20px; }}
                 .hamburger {{ display: flex; flex-direction: column; gap: 6px; }}
                 .hamburger div {{ width: 40px; height: 6px; background: white; }}
-                .logo {{ font-size: 50px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.6); }}
-                .live-badge {{ border: 4px solid #cc0000; border-radius: 12px; padding: 5px 20px; font-size: 40px; font-weight: 700; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 15px rgba(204,0,0,0.4); }}
+                .logo {{ font-size: 55px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.6); }}
+                .live-badge {{ border: 4px solid #cc0000; border-radius: 12px; padding: 5px 20px; font-size: 45px; font-weight: 700; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 15px rgba(204,0,0,0.4); }}
                 .dot {{ color: #cc0000; text-shadow: 0 0 10px #cc0000; }}
-                
-                /* Image area reduced to fit 720p */
-                .hero-container {{ position: relative; width: 100%; height: 440px; }}
+                .hero-container {{ position: relative; width: 100%; height: 600px; }}
                 .hero-img {{ width: 100%; height: 100%; object-fit: cover; }}
                 .gradient-fade {{ position: absolute; bottom: 0; width: 100%; height: 150px; background: linear-gradient(to bottom, transparent, #0f0f0f); }}
-                
-                .pip-img {{ position: absolute; top: 30px; right: 40px; width: 40%; border: 6px solid white; box-shadow: -15px 15px 30px rgba(0,0,0,0.8); }}
-                
-                /* Text area dynamically uses remaining space */
-                .text-container {{ flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 10px 40px; }}
-                .main-title {{ font-size: 80px; font-weight: 900; line-height: 1.1; text-shadow: 6px 6px 15px rgba(0,0,0,0.9); }}
+                .pip-img {{ position: absolute; top: 40px; right: 40px; width: 50%; border: 6px solid white; box-shadow: -15px 15px 30px rgba(0,0,0,0.8); }}
+                .text-container {{ flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px 40px; }}
+                .main-title {{ font-size: 100px; font-weight: 900; line-height: 1.1; text-shadow: 6px 6px 15px rgba(0,0,0,0.9); }}
                 .live-text {{ color: #cc0000; text-shadow: 6px 6px 15px rgba(0,0,0,0.9), 0 0 15px rgba(204,0,0,0.8), 0 0 30px rgba(204,0,0,0.5); }}
                 .match-text {{ color: white; }}
             </style>
