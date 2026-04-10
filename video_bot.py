@@ -59,7 +59,7 @@ print(" All Environment Variables Loaded.")
 # 🌐 HTML2IMAGE THUMBNAIL ENGINE (PROJECT 5)
 # ==========================================
 print(" Initializing HTML2Image Engine for Thumbnails...")
-hti = Html2Image(size=(1280, 1000), custom_flags=)
+hti = Html2Image(size=(1280, 720), custom_flags=)
 
 def get_image_base64(image_path):
     print(f"  Converting image '{image_path}' to Base64 format...")
@@ -73,7 +73,7 @@ def get_image_base64(image_path):
 def worker_0_5_generate_thumbnail(central_image_path, match_name_text, output_image_path):
     print(f"\n Rendering Studio Thumbnail for: '{match_name_text}'")
     
-    print(f"   Checking if central image '{central_image_path}' exists...")
+    print(f"  Checking if central image '{central_image_path}' exists...")
     if not os.path.exists(central_image_path): 
         print(f"  Central image NOT FOUND! Aborting thumbnail creation.")
         return False
@@ -88,20 +88,20 @@ def worker_0_5_generate_thumbnail(central_image_path, match_name_text, output_im
         <head>
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700;900&display=swap');
-                body {{ margin: 0; padding: 0; width: 1280px; height: 1000px; background-color: #0f0f0f; font-family: 'Roboto', sans-serif; color: white; display: flex; flex-direction: column; overflow: hidden; }}
-                .header {{ height: 120px; display: flex; align-items: center; padding: 0 40px; justify-content: space-between; z-index: 10; }}
+                body {{ margin: 0; padding: 0; width: 1280px; height: 720px; background-color: #0f0f0f; font-family: 'Roboto', sans-serif; color: white; display: flex; flex-direction: column; overflow: hidden; }}
+                .header {{ height: 100px; display: flex; align-items: center; padding: 0 40px; justify-content: space-between; z-index: 10; }}
                 .logo-container {{ display: flex; align-items: center; gap: 20px; }}
                 .hamburger {{ display: flex; flex-direction: column; gap: 6px; }}
                 .hamburger div {{ width: 40px; height: 6px; background: white; }}
-                .logo {{ font-size: 55px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.6); }}
-                .live-badge {{ border: 4px solid #cc0000; border-radius: 12px; padding: 5px 20px; font-size: 45px; font-weight: 700; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 15px rgba(204,0,0,0.4); }}
+                .logo {{ font-size: 50px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.6); }}
+                .live-badge {{ border: 4px solid #cc0000; border-radius: 12px; padding: 5px 20px; font-size: 40px; font-weight: 700; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 15px rgba(204,0,0,0.4); }}
                 .dot {{ color: #cc0000; text-shadow: 0 0 10px #cc0000; }}
-                .hero-container {{ position: relative; width: 100%; height: 600px; }}
+                .hero-container {{ position: relative; width: 100%; height: 440px; }}
                 .hero-img {{ width: 100%; height: 100%; object-fit: cover; }}
                 .gradient-fade {{ position: absolute; bottom: 0; width: 100%; height: 150px; background: linear-gradient(to bottom, transparent, #0f0f0f); }}
-                .pip-img {{ position: absolute; top: 40px; right: 40px; width: 50%; border: 6px solid white; box-shadow: -15px 15px 30px rgba(0,0,0,0.8); }}
-                .text-container {{ flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px 40px; }}
-                .main-title {{ font-size: 100px; font-weight: 900; line-height: 1.1; text-shadow: 6px 6px 15px rgba(0,0,0,0.9); }}
+                .pip-img {{ position: absolute; top: 30px; right: 40px; width: 40%; border: 6px solid white; box-shadow: -15px 15px 30px rgba(0,0,0,0.8); }}
+                .text-container {{ flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 10px 40px; }}
+                .main-title {{ font-size: 80px; font-weight: 900; line-height: 1.1; text-shadow: 6px 6px 15px rgba(0,0,0,0.9); }}
                 .live-text {{ color: #cc0000; text-shadow: 6px 6px 15px rgba(0,0,0,0.9), 0 0 15px rgba(204,0,0,0.8), 0 0 30px rgba(204,0,0,0.5); }}
                 .match-text {{ color: white; }}
             </style>
@@ -116,15 +116,12 @@ def worker_0_5_generate_thumbnail(central_image_path, match_name_text, output_im
                 <div class="gradient-fade"></div> 
                 <img src="{b64_image}" class="pip-img">
             </div>
-            
-            <!-- ✨ YAHAN CHANGE KIYA GAYA HAI ✨ -->
             <div class="text-container">
                 <div class="main-title">
                     <span class="live-text">LIVE NOW HERE: </span>
                     <span class="match-text">{match_name_text}</span>
                 </div>
             </div>
-            
         </body>
         </html>
         """
@@ -328,7 +325,7 @@ def worker_2_edit_video(dynamic_vid, static_vid, custom_audio, output_vid):
         dyn_clip = VideoFileClip(dynamic_vid)
         stat_clip = VideoFileClip(static_vid)
         
-        print("   Resizing dynamic clip to match static clip...")
+        print("  Resizing dynamic clip to match static clip...")
         dyn_clip = dyn_clip.resize(stat_clip.size)
 
         def blur(frame): 
@@ -379,7 +376,7 @@ def worker_3_upload(video_path, page_id, title, desc, dynamic_thumb_path):
             f_thumb = open(dynamic_thumb_path, "rb")
             files_to_open.append(f_thumb)
             print("  Attaching thumbnail as 'image/png' to payload...")
-            files = (dynamic_thumb_path, f_thumb, "image/png")
+            files = (os.path.basename(dynamic_thumb_path), f_thumb, "image/png")
         else:
             print(f"  No dynamic thumbnail found. Proceeding without thumbnail.")
 
