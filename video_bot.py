@@ -117,7 +117,8 @@ def worker_0_5_generate_thumbnail(central_image_path, match_name_text, output_im
                 <img src="{b64_image}" class="pip-img">
             </div>
             <div class="text-container">
-                <div class="main-title"><span class="live-text">LIVE NOW: </span><span class="match-text">{match_name_text}</span></div>
+                # <div class="main-title"><span class="live-text">LIVE NOW: </span><span class="match-text">{match_name_text}</span></div>
+                <div class="main-title"><span class="live-text">LIVE NOW </span></div>
             </div>
         </body>
         </html>
