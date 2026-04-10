@@ -273,14 +273,26 @@ def worker_3_upload(video_path, page_id, title, desc, thumb_path):
             video_id = res['id']
             print(f"[✅] Video Upload SUCCESS! (Post ID: {video_id})")
             
+            # --- THE FIX: 2-STEP DYNAMIC THUMBNAIL ATTACK ---
             if thumb_path and os.path.exists(thumb_path):
-                print(f"[*] Step 2: Applying dynamically generated Studio Thumbnail...")
+                print(f"[*] Step 2: Applying dynamically generated Studio Thumbnail ({thumb_path})...")
+                # Video upload hone ke baad uski details update karne ka endpoint
                 thumb_update_url = f"https://graph.facebook.com/v18.0/{video_id}"
+                
+                # File ko explicitly image/png batana zaroori hai
                 with open(thumb_path, "rb") as f_thumb:
-                    thumb_res = requests.post(thumb_update_url, data={"access_token": FB_ACCESS_TOKEN}, files={"thumb": f_thumb}).json()
-                    if thumb_res.get("success"): print("[✅] Custom Studio Thumbnail Applied!")
+                    thumb_res = requests.post(
+                        thumb_update_url, 
+                        data={"access_token": FB_ACCESS_TOKEN}, 
+                        files={"thumb": (os.path.basename(thumb_path), f_thumb, 'image/png')}
+                    ).json()
+                    
+                    if thumb_res.get("success"): 
+                        print("[✅] Custom Studio Thumbnail Applied Successfully!")
+                    else:
+                        print(f"[⚠️] Facebook rejected the thumbnail. Reason: {thumb_res}")
             else:
-                print(f"[⚠️] Thumbnail file '{thumb_path}' not found! Uploading without it.")
+                print(f"[⚠️] Thumbnail file '{thumb_path}' nahi mili!")
 
             # Comment Logic
             time.sleep(15) 
@@ -291,6 +303,76 @@ def worker_3_upload(video_path, page_id, title, desc, thumb_path):
             
     except Exception as e:
         print(f"[💥 Worker 3] Upload Crash: {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ==========================================
+# WORKER 3: 2-STEP FACEBOOK UPLOAD
+# ==========================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def worker_3_upload(video_path, page_id, title, desc, thumb_path):
+#     print(f"\n[📤 Worker 3] Preparing Facebook Upload...")
+#     url = f"https://graph-video.facebook.com/v18.0/{page_id}/videos"
+#     payload = {"title": title, "description": desc, "access_token": FB_ACCESS_TOKEN}
+    
+#     try:
+#         print(f"[*] Step 1: Uploading Video...")
+#         with open(video_path, "rb") as f_vid:
+#             res = requests.post(url, data=payload, files={"source": ("video.mp4", f_vid, "video/mp4")}).json()
+            
+#         if "id" in res:
+#             video_id = res['id']
+#             print(f"[✅] Video Upload SUCCESS! (Post ID: {video_id})")
+            
+#             if thumb_path and os.path.exists(thumb_path):
+#                 print(f"[*] Step 2: Applying dynamically generated Studio Thumbnail...")
+#                 thumb_update_url = f"https://graph.facebook.com/v18.0/{video_id}"
+#                 with open(thumb_path, "rb") as f_thumb:
+#                     thumb_res = requests.post(thumb_update_url, data={"access_token": FB_ACCESS_TOKEN}, files={"thumb": f_thumb}).json()
+#                     if thumb_res.get("success"): print("[✅] Custom Studio Thumbnail Applied!")
+#             else:
+#                 print(f"[⚠️] Thumbnail file '{thumb_path}' not found! Uploading without it.")
+
+#             # Comment Logic
+#             time.sleep(15) 
+#             comment_url = f"https://graph.facebook.com/v18.0/{video_id}/comments"
+#             comment_text = f"📺 Watch Full Match Without Buffering Here: https://bulbul4u-live.xyz"
+#             requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN})
+#             print("[✅ Worker 3] Upload Workflow Complete.")
+            
+#     except Exception as e:
+#         print(f"[💥 Worker 3] Upload Crash: {e}")
 
 # ==========================================
 # MAIN LOOP (THE BRAIN)
