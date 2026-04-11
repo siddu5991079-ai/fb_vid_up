@@ -1,3 +1,5 @@
+
+
 name: Ultimate Hybrid Video Bot
 
 on:
@@ -18,7 +20,7 @@ on:
       target_url:
         description: 'Target Website URL'
         required: true
-        default: 'https://dadocric.st/player.php?id=starsp'
+        default: 'https://bhalocast.com/atoplay.php?v=wextres&hello=m1lko&expires=123456'
       thumbnail_image_name:
         description: 'Thumbnail Name (Leave empty! Bot ab stream se auto-generate karega)'
         required: false
@@ -49,15 +51,20 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Install System Tools & Fake Screen (Xvfb)
+    - name: Install System Tools, Google Chrome & Fake Screen (Xvfb)
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg google-chrome-stable xvfb imagemagick
+        # Asli Google Chrome install karna zaroori hai DrissionPage ke liye
+        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        sudo apt install -y ./google-chrome-stable_current_amd64.deb
+        # Baki system tools
+        sudo apt-get install -y ffmpeg xvfb imagemagick
 
     - name: Install Python Requirements
-      # ✨ YAHAN html2image ADD KIYA GAYA HAI ✨
+      # ✨ YAHAN SELENIUM NIKAL KAR DRISSIONPAGE ADD KIYA GAYA HAI ✨
       run: |
-        pip install selenium selenium-wire webdriver-manager blinker==1.7.0 "setuptools<70" requests moviepy==1.0.3 numpy pillow html2image
+        python -m pip install --upgrade pip
+        pip install DrissionPage requests moviepy==1.0.3 numpy pillow html2image
 
     - name: Start The Bot with Virtual Screen
       env:
@@ -72,7 +79,105 @@ jobs:
         PROXY_PORT: ${{ inputs.proxy_port }}
         PROXY_USER: ${{ inputs.proxy_user }}
         PROXY_PASS: ${{ inputs.proxy_pass }}
+      # Agar aapki python file ka naam kuch aur hai toh 'video_bot.py' ki jagah wo naam likhein
       run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python -u video_bot.py
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ============================================ main code below starts ==================================
+
+
+
+
+
+
+
+
+# name: Ultimate Hybrid Video Bot
+
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       titles_list:
+#         description: 'Titles Array (Separate with ,, e.g. Title 1 ,, Title 2)'
+#         required: true
+#         default: 'Delhi Capitals vs Gujarat Titans Live Match Today,,Blockbuster Match DC vs GT,,Watch HD Stream Delhi Capitals vs Gujarat Titans'
+#       descs_list:
+#         description: 'Descriptions Array (Separate with ,, )'
+#         required: true
+#         default: 'DC take on GT in the latest IPL match. Watch the live action here without buffer,,The best IPL teams DC and GT face off. Click the link in comments for full buffer-free stream,,DC vs GT is a high-voltage clash. Witness every boundary and wicket. Full buffer-free stream details in comments! 👇'
+#       hashtags:
+#         description: 'Hashtags (Space separated)'
+#         required: true
+#         default: '#IPL2026 #DCvsGT #DelhiCapitals #GujaratTitans #IPLLive #TataIPL #T20Cricket #CricketLovers #LiveMatch'
+#       target_url:
+#         description: 'Target Website URL'
+#         required: true
+#         default: 'https://dadocric.st/player.php?id=starsp'
+#       thumbnail_image_name:
+#         description: 'Thumbnail Name (Leave empty! Bot ab stream se auto-generate karega)'
+#         required: false
+#         default: ''
+#       proxy_ip:
+#         description: 'Proxy IP Address'
+#         required: true
+#         default: '31.59.20.176'
+#       proxy_port:
+#         description: 'Proxy Port'
+#         required: true
+#         default: '6754'
+#       proxy_user:
+#         description: 'Proxy Username'
+#         required: true
+#         default: 'dgmtstlf'
+#       proxy_pass:
+#         description: 'Proxy Password'
+#         required: true
+#         default: 'pm4wnuro0gy9'
+
+# jobs:
+#   run-bot:
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 360 # 6 Ghante ki Full limit
+
+#     steps:
+#     - name: Checkout Code
+#       uses: actions/checkout@v3
+
+#     - name: Install System Tools & Fake Screen (Xvfb)
+#       run: |
+#         sudo apt-get update
+#         sudo apt-get install -y ffmpeg google-chrome-stable xvfb imagemagick
+
+#     - name: Install Python Requirements
+#       # ✨ YAHAN html2image ADD KIYA GAYA HAI ✨
+#       run: |
+#         pip install selenium selenium-wire webdriver-manager blinker==1.7.0 "setuptools<70" requests moviepy==1.0.3 numpy pillow html2image
+
+#     - name: Start The Bot with Virtual Screen
+#       env:
+#         FB_ACCESS_TOKEN: ${{ secrets.FB_ACCESS_TOKEN }} 
+#         GH_PAT: ${{ secrets.GH_PAT }}
+#         TITLES_LIST: ${{ inputs.titles_list }}
+#         DESCS_LIST: ${{ inputs.descs_list }}
+#         HASHTAGS: ${{ inputs.hashtags }}
+#         TARGET_URL: ${{ inputs.target_url }}
+#         THUMBNAIL_IMAGE_NAME: ${{ inputs.thumbnail_image_name }} 
+#         PROXY_IP: ${{ inputs.proxy_ip }}
+#         PROXY_PORT: ${{ inputs.proxy_port }}
+#         PROXY_USER: ${{ inputs.proxy_user }}
+#         PROXY_PASS: ${{ inputs.proxy_pass }}
+#       run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python -u video_bot.py
 
 
 
