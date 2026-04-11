@@ -212,17 +212,20 @@ def get_link_with_headers():
     opts = ChromiumOptions()
     
     # ==========================================
-    # 🚀 SERVER CRASH FIXES (For GitHub Actions)
+    # 🚀 SERVER CRASH & HANDSHAKE 404 FIXES
     # ==========================================
-    opts.set_browser_path('/usr/bin/google-chrome') # Server ko exactly batana ke Chrome kahan hai
-    opts.set_local_port(random.randint(9000, 9999)) # Har dafa naya port use karega taake clash na ho
+    opts.set_browser_path('/usr/bin/google-chrome')
+    opts.set_local_port(0) # '0' likhne se OS khud koi free port dega, port clash nahi hoga
     
     opts.set_argument('--no-sandbox')
-    opts.set_argument('--disable-dev-shm-usage') # <--- YEH SAB SE ZAROORI HAI! Server ki memory full hone se bachata hai
+    opts.set_argument('--disable-dev-shm-usage') 
     opts.set_argument('--disable-gpu')
     opts.set_argument('--mute-audio')
     opts.set_argument('--autoplay-policy=no-user-gesture-required')
     opts.set_argument('--headless=new') 
+    
+    # 👇 YEH LINE 404 HANDSHAKE ERROR KO KHATAM KAREGI 👇
+    opts.set_argument('--remote-allow-origins=*') 
 
     # Agar proxy use karni ho toh isko uncomment karein:
     # opts.set_argument(f'--proxy-server={PROXY_IP}:{PROXY_PORT}')
