@@ -1,10 +1,24 @@
 
-
 name: Ultimate Hybrid Video Bot
 
 on:
   workflow_dispatch:
     inputs:
+      source_channel:
+        description: 'Select Match Link (Bhalocast)'
+        required: true
+        type: choice
+        options:
+          - 'willowextra'
+          - 'ptvskpr'
+          - 'star1kibich'
+          - 'penguin_ptvskpr'
+          - 'custom_url'
+        default: 'willowextra'
+      target_url:
+        description: 'Custom URL (Agar upar Custom select kiya ho)'
+        required: false
+        default: ''
       titles_list:
         description: 'Titles Array (Separate with ,, e.g. Title 1 ,, Title 2)'
         required: true
@@ -17,16 +31,12 @@ on:
         description: 'Hashtags (Space separated)'
         required: true
         default: '#IPL2026 #DCvsGT #DelhiCapitals #GujaratTitans #IPLLive #TataIPL #T20Cricket #CricketLovers #LiveMatch'
-      target_url:
-        description: 'Target Website URL'
-        required: true
-        default: 'https://bhalocast.com/atoplay.php?v=wextres&hello=m1lko&expires=123456'
       thumbnail_image_name:
         description: 'Thumbnail Name (Leave empty! Bot ab stream se auto-generate karega)'
         required: false
         default: ''
       proxy_ip:
-        description: 'Proxy IP Address'
+        description: 'Proxy IP Address (For FFmpeg only)'
         required: true
         default: '31.59.20.176'
       proxy_port:
@@ -51,17 +61,20 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Install System Tools, Google Chrome & Fake Screen (Xvfb)
+    - name: Python Install Karna
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install System Tools & Real Google Chrome (with Xvfb)
       run: |
         sudo apt-get update
-        # Asli Google Chrome install karna zaroori hai DrissionPage ke liye
+        sudo apt-get install -y ffmpeg xvfb imagemagick
         wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
         sudo apt install -y ./google-chrome-stable_current_amd64.deb
-        # Baki system tools
-        sudo apt-get install -y ffmpeg xvfb imagemagick
 
     - name: Install Python Requirements
-      # ✨ YAHAN SELENIUM NIKAL KAR DRISSIONPAGE ADD KIYA GAYA HAI ✨
+      # ✨ YAHAN DrissionPage ADD KIYA HAI AUR SELENIUM HATA DIYA ✨
       run: |
         python -m pip install --upgrade pip
         pip install DrissionPage requests moviepy==1.0.3 numpy pillow html2image
@@ -70,6 +83,9 @@ jobs:
       env:
         FB_ACCESS_TOKEN: ${{ secrets.FB_ACCESS_TOKEN }} 
         GH_PAT: ${{ secrets.GH_PAT }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_REF_NAME: ${{ github.ref_name }}
+        SOURCE_CHANNEL: ${{ inputs.source_channel }}
         TITLES_LIST: ${{ inputs.titles_list }}
         DESCS_LIST: ${{ inputs.descs_list }}
         HASHTAGS: ${{ inputs.hashtags }}
@@ -79,7 +95,7 @@ jobs:
         PROXY_PORT: ${{ inputs.proxy_port }}
         PROXY_USER: ${{ inputs.proxy_user }}
         PROXY_PASS: ${{ inputs.proxy_pass }}
-      # Agar aapki python file ka naam kuch aur hai toh 'video_bot.py' ki jagah wo naam likhein
+      # Python script ka naam wahi rakha hai jo aapne diya tha (video_bot.py)
       run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python -u video_bot.py
 
 
