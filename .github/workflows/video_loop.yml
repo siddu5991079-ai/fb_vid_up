@@ -34,11 +34,11 @@ on:
       proxy_user:
         description: 'Proxy Username'
         required: true
-        default: 'wiiuphmq'
+        default: 'dgmtstlf'
       proxy_pass:
         description: 'Proxy Password'
         required: true
-        default: 'o3m2p8vkmzr3'
+        default: 'pm4wnuro0gy9'
 
 jobs:
   run-bot:
