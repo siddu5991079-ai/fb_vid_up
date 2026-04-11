@@ -212,10 +212,16 @@ def get_link_with_headers():
     opts = ChromiumOptions()
     
     # ==========================================
-    # 🚀 SERVER CRASH & HANDSHAKE 404 FIXES
+    # 🚀 FINAL LINUX SERVER FIXES
     # ==========================================
     opts.set_browser_path('/usr/bin/google-chrome')
-    opts.set_local_port(0) # '0' likhne se OS khud koi free port dega, port clash nahi hoga
+    
+    # Port 0 error de raha tha, isliye wapas random port assign kar rahe hain
+    port = random.randint(9200, 9999)
+    opts.set_local_port(port)
+    
+    # Har session ke liye ek naya temporary folder banayenge taake conflict na ho
+    opts.set_user_data_path(f"/tmp/chrome_data_{port}")
     
     opts.set_argument('--no-sandbox')
     opts.set_argument('--disable-dev-shm-usage') 
@@ -223,17 +229,12 @@ def get_link_with_headers():
     opts.set_argument('--mute-audio')
     opts.set_argument('--autoplay-policy=no-user-gesture-required')
     opts.set_argument('--headless=new') 
-    
-    # 👇 YEH LINE 404 HANDSHAKE ERROR KO KHATAM KAREGI 👇
-    opts.set_argument('--remote-allow-origins=*') 
-
-    # Agar proxy use karni ho toh isko uncomment karein:
-    # opts.set_argument(f'--proxy-server={PROXY_IP}:{PROXY_PORT}')
+    opts.set_argument('--remote-allow-origins=*') # 404 Handshake error fix karne ke liye
 
     page = None
     data = None
     try:
-        print("  [>] Launching DrissionPage webdriver...")
+        print(f"  [>] Launching DrissionPage webdriver on port {port}...")
         page = ChromiumPage(addr_or_opts=opts)
         
         page.listen.start('m3u8')
