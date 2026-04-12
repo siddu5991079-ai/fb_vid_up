@@ -337,6 +337,10 @@ def worker_1_capture_video(data, filename, duration=10):
 # ==========================================
 # WORKER 2: VIDEO EDITING (PiP + Blur Engine)
 # ==========================================
+
+# ==========================================
+# WORKER 2: VIDEO EDITING (PiP + Blur Engine)
+# ==========================================
 def worker_2_edit_video(dynamic_vid, static_vid, custom_audio, output_vid):
     print(f"\n[🎬 Worker 2] Starting Video Editor Engine with PiP Logic...")
     try:
@@ -356,7 +360,19 @@ def worker_2_edit_video(dynamic_vid, static_vid, custom_audio, output_vid):
             return np.array(Image.fromarray(frame).filter(ImageFilter.GaussianBlur(20)))
 
         dyn_clip = dyn_clip.fl_image(blur)
-        merged = concatenate_videoclips([dyn_clip, stat_clip])
+        
+        # =========================================================
+        # 🛠️ THE FIX: Size aur FPS ko 100% same karna
+        # =========================================================
+        print("  [>] Synchronizing Size and FPS for perfect merging...")
+        dyn_clip = dyn_clip.resize(newsize=stat_clip.size)
+        dyn_clip = dyn_clip.set_fps(stat_clip.fps)
+        
+        print("  [>] Concatenating clips using 'compose' method to avoid RGB static...")
+        # method="compose" sab se zaroori lafz hai is issue ko khatam karne ke liye
+        merged = concatenate_videoclips([dyn_clip, stat_clip], method="compose")
+        # =========================================================
+
         audio = AudioFileClip(custom_audio)
         final_audio = afx.audio_loop(audio, duration=merged.duration)
         final_video = merged.set_audio(final_audio)
@@ -371,6 +387,48 @@ def worker_2_edit_video(dynamic_vid, static_vid, custom_audio, output_vid):
     except Exception as e: 
         print(f"[❌ Worker 2] Editing Crashed: {e}")
         return False
+
+
+
+
+
+
+
+
+# def worker_2_edit_video(dynamic_vid, static_vid, custom_audio, output_vid):
+#     print(f"\n[🎬 Worker 2] Starting Video Editor Engine with PiP Logic...")
+#     try:
+#         dyn_clip = VideoFileClip(dynamic_vid)
+#         stat_clip = VideoFileClip(static_vid)
+#         bg_image_path = "website_frame.png"
+        
+#         if os.path.exists(bg_image_path):
+#             bg_clip = ImageClip(bg_image_path).set_duration(dyn_clip.duration)
+#             target_x, target_y, target_width, target_height = 0, 250, 1064, 565
+#             pip_video = dyn_clip.resize((target_width, target_height)).set_position((target_x, target_y))
+#             dyn_clip = CompositeVideoClip([bg_clip, pip_video])
+#         else:
+#             dyn_clip = dyn_clip.resize(stat_clip.size)
+
+#         def blur(frame): 
+#             return np.array(Image.fromarray(frame).filter(ImageFilter.GaussianBlur(20)))
+
+#         dyn_clip = dyn_clip.fl_image(blur)
+#         merged = concatenate_videoclips([dyn_clip, stat_clip])
+#         audio = AudioFileClip(custom_audio)
+#         final_audio = afx.audio_loop(audio, duration=merged.duration)
+#         final_video = merged.set_audio(final_audio)
+
+#         final_video.write_videofile(output_vid, codec="libx264", audio_codec="aac", fps=stat_clip.fps, preset="ultrafast", logger=None)
+        
+#         dyn_clip.close(); stat_clip.close(); audio.close(); final_video.close()
+#         if 'bg_clip' in locals(): bg_clip.close()
+
+#         print("[✅ Worker 2] Video edited successfully with PiP and Blur.")
+#         return True
+#     except Exception as e: 
+#         print(f"[❌ Worker 2] Editing Crashed: {e}")
+#         return False
 
 # ==========================================
 # WORKER 3: 1-STEP FACEBOOK UPLOAD
