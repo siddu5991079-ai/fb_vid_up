@@ -1,516 +1,153 @@
-
-import mimetypes 
 import os
 import time
-import subprocess
-import urllib.parse
-import traceback
 import requests
-import random 
-import numpy as np
-import base64
-from html2image import Html2Image
-from PIL import Image, ImageFilter
+from datetime import datetime, timezone
+
+print("\n" + "="*50)
+print("   🚀 FACEBOOK PAGE MONITOR (SMART SELECTOR EDITION)")
+print("="*50)
 
 # ==========================================
-# 🦸‍♂️ THE SUPERMAN PATCH (For Pillow 10+)
+# ⚙️ SETTINGS & TOKENS
 # ==========================================
-print("[⚙️ System] Checking Pillow version...")
-if not hasattr(Image, 'ANTIALIAS'):
-    Image.ANTIALIAS = Image.LANCZOS
-    print("[✅ System] Superman Patch Applied for Pillow.")
+COMMENT_TEXT = "📺 Watch Full Match Without Buffering Here: https://bulbul4u-live.xyz"
+COMMENT_IMG_PATH = "comment_image.jpeg"
 
-from datetime import datetime, timezone, timedelta
+START_TIME = time.time()
+END_TIME_LIMIT = (5 * 60 * 60) + (50 * 60)  # 5 hours 50 mins limit
+WAIT_TIME = 300  # 5 Minutes wait between checks
 
-# --- DrissionPage Import ---
-from DrissionPage import ChromiumPage, ChromiumOptions
+# 🎯 USER SELECTION PULL KARNA
+TARGET_PAGE = os.environ.get('TARGET_PAGE', 'Primary Page')
+CUSTOM_TOKEN = os.environ.get('CUSTOM_TOKEN', '').strip()
 
-# MoviePy for Video Editing
-print("[⚙️ System] Loading MoviePy modules (This might take a second)...")
-from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips, ImageClip, CompositeVideoClip
-import moviepy.audio.fx.all as afx
-print("[✅ System] MoviePy modules loaded successfully.")
-
-# ==========================================
-# ⚙️ SETTINGS & TOKENS (DYNAMIC PAGE SELECTOR)
-# ==========================================
-print("\n[⚙️ System] Initializing Settings and Environment Variables...")
-
-# --- DYNAMIC TOKEN LOGIC ---
-SELECTED_PAGE = os.environ.get('FB_TARGET_PAGE', 'Primary_Page')
-print(f"[⚙️ System] Target Facebook Page Selected: {SELECTED_PAGE}")
-
-if SELECTED_PAGE == 'Secondary_Page':
-    FB_ACCESS_TOKEN = os.environ.get('FB_TOKEN_SECONDARY', '').strip()
-else:
-    FB_ACCESS_TOKEN = os.environ.get('FB_TOKEN_PRIMARY', '').strip()
-# ---------------------------
-
-TITLES_INPUT = os.environ.get('TITLES_LIST', 'Live Match Today,,Watch Full Match DC vs GT').strip()
-DESCS_INPUT = os.environ.get('DESCS_LIST', 'Watch the live action here').strip()
-HASHTAGS = os.environ.get('HASHTAGS', '#IPL2026 #DCvsGT #CricketLovers #LiveMatch').strip()
-
-# --- ANTI-SPAM COMMENTS LIST ---
-COMMENTS_LIST = [
-    "📺 Watch Full Match Without Buffering Here: https://bulbul4u-live.xyz",
-    "🔥 Catch the Live Stream in HD here: https://bulbul4u-live.xyz",
-    "👇 Click below for the Uninterrupted Live Match: https://bulbul4u-live.xyz",
-    "🏏 Don't miss the action! Watch Live: https://bulbul4u-live.xyz",
-    "⚡ Fast & Free Live Streaming Link: https://bulbul4u-live.xyz"
-]
-
-PROXY_IP = os.environ.get('PROXY_IP', '31.59.20.176')
-PROXY_PORT = os.environ.get('PROXY_PORT', '6754')
-PROXY_USER = os.environ.get('PROXY_USER', 'ehhppbec')
-PROXY_PASS = os.environ.get('PROXY_PASS', '5f69y4wngj70')
-PROXY_URL = f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}"
-
-# --- BHALOCAST LINKS LOGIC ---
-SOURCE_CHANNEL = os.environ.get('SOURCE_CHANNEL', 'willowextra')
-BHALOCAST_LINKS = {
-    'willowextra': "https://bhalocast.com/atoplay.php?v=wextres&hello=m1lko&expires=123456",
-    'ptvskpr': "https://bhalocast.com/atoplay.php?v=ptvskpr&hello=m1lko&expires=123456",
-    'star1kibich': "https://bhalocast.com/atoplay.php?v=star1kibich&hello=m1lko&expires=123456",
-    'penguin_ptvskpr': "https://bhalocast.com/penguin.php?v=ptvskpr&hello=m1lko&expires=123456"
+# 🗄️ TOKENS DICTIONARY (Sare available tokens yahan map hain)
+AVAILABLE_TOKENS = {
+    'Primary Page': os.environ.get('PRIMARY_TOKEN', '').strip(),
+    'Secondary Page': os.environ.get('SECONDARY_TOKEN', '').strip(),
+    'Page 3': os.environ.get('TOKEN_3', '').strip(),
+    'Page 4': os.environ.get('TOKEN_4', '').strip(),
 }
 
-if SOURCE_CHANNEL == 'custom_url':
-    TARGET_WEBSITE = os.environ.get('TARGET_URL', '').strip()
+# 🧠 SMART SELECTION LOGIC
+ACTIVE_TOKEN = ""
+if TARGET_PAGE == 'Custom Token (Below)':
+    ACTIVE_TOKEN = CUSTOM_TOKEN
+    print(f"[⚙️] Mode: Custom Token Provide kiya gaya hai.")
 else:
-    TARGET_WEBSITE = BHALOCAST_LINKS.get(SOURCE_CHANNEL, BHALOCAST_LINKS['willowextra'])
-
-REFERER = "https://bhalocast.com/"
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
-
-PKT = timezone(timedelta(hours=5))
-START_TIME = time.time()
-RESTART_TRIGGER_TIME = (5 * 60 * 60) + (30 * 60) 
-END_TIME_LIMIT = (5 * 60 * 60) + (50 * 60) 
-print(f"[✅ System] Settings Loaded. Target: {TARGET_WEBSITE}")
+    ACTIVE_TOKEN = AVAILABLE_TOKENS.get(TARGET_PAGE, "")
+    print(f"[⚙️] Mode: '{TARGET_PAGE}' Select kiya gaya hai.")
 
 # ==========================================
-# 🌐 HTML2IMAGE THUMBNAIL ENGINE
+# 🛠️ CORE FUNCTIONS
 # ==========================================
-print("[⚙️ System] Initializing HTML2Image Engine for Thumbnails...")
-hti = Html2Image(size=(1280, 720), custom_flags=['--hide-scrollbars', '--no-sandbox', '--disable-gpu'])
-
-def get_image_base64(image_path):
-    print(f"  [>] Converting image '{image_path}' to Base64 format...")
-    with open(image_path, "rb") as img_file:
-        b64_string = base64.b64encode(img_file.read()).decode('utf-8')
-        ext = image_path.split('.')[-1].lower()
-        if ext == 'png': return f"data:image/png;base64,{b64_string}"
-        else: return f"data:image/jpeg;base64,{b64_string}"
-
-def worker_0_5_generate_thumbnail(central_image_path, match_name_text, output_image_path):
-    print(f"\n[🎨 Worker 0.5] Rendering Studio Thumbnail for: '{match_name_text}'")
-    if not os.path.exists(central_image_path): 
-        print(f"  [❌ Worker 0.5] Central image NOT FOUND! Aborting thumbnail creation.")
-        return False
-        
+def get_page_info(token):
     try:
-        b64_image = get_image_base64(central_image_path)
-        html_code = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700;900&display=swap');
-                body {{ margin: 0; padding: 0; width: 1280px; height: 720px; background-color: #0f0f0f; font-family: 'Roboto', sans-serif; color: white; display: flex; flex-direction: column; overflow: hidden; }}
-                .header {{ height: 100px; display: flex; align-items: center; padding: 0 40px; justify-content: space-between; z-index: 10; }}
-                .logo-container {{ display: flex; align-items: center; gap: 20px; }}
-                .hamburger {{ display: flex; flex-direction: column; gap: 6px; }}
-                .hamburger div {{ width: 40px; height: 6px; background: white; }}
-                .logo {{ font-size: 50px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.6); }}
-                .live-badge {{ border: 4px solid #cc0000; border-radius: 12px; padding: 5px 20px; font-size: 40px; font-weight: 700; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 15px rgba(204,0,0,0.4); }}
-                .dot {{ color: #cc0000; text-shadow: 0 0 10px #cc0000; }}
-                .hero-container {{ position: relative; width: 100%; height: 440px; }}
-                .hero-img {{ width: 100%; height: 100%; object-fit: cover; }}
-                .gradient-fade {{ position: absolute; bottom: 0; width: 100%; height: 150px; background: linear-gradient(to bottom, transparent, #0f0f0f); }}
-                .pip-img {{ position: absolute; top: 30px; right: 40px; width: 40%; border: 6px solid white; box-shadow: -15px 15px 30px rgba(0,0,0,0.8); }}
-                .text-container {{ flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 10px 40px; }}
-                .main-title {{ font-size: 80px; font-weight: 900; line-height: 1.1; text-shadow: 6px 6px 15px rgba(0,0,0,0.9); }}
-                .live-text {{ color: #cc0000; text-shadow: 6px 6px 15px rgba(0,0,0,0.9), 0 0 15px rgba(204,0,0,0.8), 0 0 30px rgba(204,0,0,0.5); }}
-                .match-text {{ color: white; }}
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <div class="logo-container"><div class="hamburger"><div></div><div></div><div></div></div><div class="logo">SPORTSHUB</div></div>
-                <div class="live-badge"><span class="dot">●</span> LIVE</div>
-            </div>
-            <div class="hero-container">
-                <img src="{b64_image}" class="hero-img">
-                <div class="gradient-fade"></div> 
-                <img src="{b64_image}" class="pip-img">
-            </div>
-            <div class="text-container">
-                <div class="main-title">
-                    <span class="live-text">LIVE NOW HERE: </span>
-                    <span class="match-text">{match_name_text}</span>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-        hti.screenshot(html_str=html_code, save_as=output_image_path)
-        print(f"[✅ Worker 0.5] Thumbnail successfully generated: {output_image_path}")
-        return True
+        res = requests.get("https://graph.facebook.com/v18.0/me", params={"access_token": token, "fields": "id,name"}).json()
+        if 'id' in res: return res['id'], res['name']
     except Exception as e:
-        print(f"[❌ Worker 0.5] Thumbnail Gen Error: {e}")
-        return False
+        print(f"  [❌] Token verification failed: {e}")
+    return None, None
 
-# ==========================================
-# 🧠 ANTI-SPAM METADATA
-# ==========================================
-def generate_unique_metadata(clip_number):
-    print(f"\n[🧠 Metadata] Generating Unique Titles and Descriptions for Clip #{clip_number}...")
-    all_titles = [t.strip() for t in TITLES_INPUT.split(',,') if t.strip()]
-    all_descriptions = [d.strip() for d in DESCS_INPUT.split(',,') if d.strip()]
+def post_comment(post_id, token):
+    print(f"  [>] Posting promotional comment on {post_id}...")
+    comment_url = f"https://graph.facebook.com/v18.0/{post_id}/comments"
     
-    if not all_titles: all_titles = ["Live Match Today"]
-    if not all_descriptions: all_descriptions = ["Watch the live action here!"]
-    
-    chosen_title = random.choice(all_titles)
-    if len(chosen_title) > 250: chosen_title = chosen_title[:247] + "..."
-        
-    emojis = ["🔥", "🏏", "⚡", "🏆", "💥", "😱", "📺", "🚀"]
-    emo = random.sample(emojis, 3) 
-    current_time = datetime.now(PKT).strftime("%I:%M %p")
-
-    tags_list = HASHTAGS.split() 
-    random.shuffle(tags_list)    
-    selected_4_tags = " ".join(tags_list[:4]) 
-    
-    final_description = f"{chosen_title} {emo[0]} {emo[1]} {emo[2]}\n\n{random.choice(all_descriptions)}\n\n⏱️ Update: {current_time} | Clip #{clip_number}\n\n👇 Watch Full Match Link in First Comment!\n\n{selected_4_tags}"
-    print("[✅ Metadata] Metadata generation complete.")
-    return chosen_title, final_description
-
-# ==========================================
-# 🔄 RELAY RACE (AUTO RESTART)
-# ==========================================
-def trigger_next_run():
-    print("\n[⏰ Relay Race] Attempting to trigger the next bot run via GitHub API...")
-    token = os.environ.get('GH_PAT')
-    repo = os.environ.get('GITHUB_REPOSITORY') 
-    branch = os.environ.get('GITHUB_REF_NAME', 'main')
-    url = f"https://api.github.com/repos/{repo}/actions/workflows/video_loop.yml/dispatches"
-    headers = {"Accept": "application/vnd.github.v3+json", "Authorization": f"token {token}"}
-    
-    data = {
-        "ref": branch,
-        "inputs": {
-            "fb_target_page": SELECTED_PAGE, # Aglay bot ko bhi target page pass kar rahe hain
-            "source_channel": SOURCE_CHANNEL,
-            "target_url": os.environ.get('TARGET_URL', ''), 
-            "proxy_ip": PROXY_IP, "proxy_port": PROXY_PORT,
-            "proxy_user": PROXY_USER, "proxy_pass": PROXY_PASS,
-            "titles_list": TITLES_INPUT, "descs_list": DESCS_INPUT, "hashtags": HASHTAGS
-        }
-    }
-    try: 
-        res = requests.post(url, headers=headers, json=data)
-        if res.status_code == 204:
-            print("[✅ Relay Race] Next Bot Triggered Successfully (Status 204).")
-        else:
-            print(f"[⚠️ Relay Race] Trigger sent but got unexpected status: {res.status_code}")
-    except Exception as e: 
-        print(f"[❌ Relay Race] Request failed: {e}")
-
-# ==========================================
-# STEP 1: DRISSIONPAGE LINK EXTRACTOR
-# ==========================================
-def get_link_with_headers():
-    print("\n[🔍 DrissionPage] Starting Browser to steal M3U8 link (NO PROXY)...")
-    opts = ChromiumOptions()
-    opts.set_argument('--autoplay-policy=no-user-gesture-required')
-    opts.set_argument('--no-sandbox')
-    opts.set_argument('--disable-gpu')
-    opts.set_argument('--disable-dev-shm-usage')
-    opts.set_argument('--mute-audio')
-
-    page = None
-    data = None
     try:
-        page = ChromiumPage(addr_or_opts=opts)
-        page.listen.start('m3u8')
-        page.get(TARGET_WEBSITE)
+        if os.path.exists(COMMENT_IMG_PATH):
+            print("  [📸] Image found! Posting Comment WITH Photo...")
+            with open(COMMENT_IMG_PATH, "rb") as img:
+                res = requests.post(comment_url, data={"message": COMMENT_TEXT, "access_token": token}, files={"source": img}).json()
+        else:
+            print("  [📝] No image found. Posting TEXT-ONLY Comment...")
+            res = requests.post(comment_url, data={"message": COMMENT_TEXT, "access_token": token}).json()
+
+        if 'id' in res:
+            print(f"  [✅] Comment Placed Successfully! Comment ID: {res['id']}")
+        else:
+            print(f"  [❌] Error posting comment: {res}")
+    except Exception as e:
+        print(f"  [❌] Crash while posting comment: {e}")
+
+def check_and_comment(token):
+    page_id, page_name = get_page_info(token)
+    if not page_id:
+        print(f"  [❌] Invalid Token! Could not authenticate with Facebook API.")
+        return
+
+    print(f"\n[🔍] Monitoring Page: {page_name} (ID: {page_id})")
+    
+    try:
+        posts_url = f"https://graph.facebook.com/v18.0/{page_id}/posts?fields=id,created_time&access_token={token}"
+        posts_data = requests.get(posts_url).json()
         
-        print("  [⏳] Scanning network requests for up to 90 seconds...")
-        start_time = time.time()
+        if 'data' not in posts_data:
+            print(f"  [⚠️] Could not fetch posts. API Response: {posts_data}")
+            return
+            
+        posts = posts_data['data']
+        now_utc = datetime.now(timezone.utc)
         
-        while time.time() - start_time < 90:
-            for packet in page.listen.steps(count=1, timeout=3, gap=1):
-                if packet:
-                    items = packet if isinstance(packet, list) else [packet]
-                    for p in items:
-                        print(f"  [✅ BINGO] M3U8 link found: {p.url}")
-                        req_headers = p.request.headers if hasattr(p, 'request') else {}
-                        data = {
-                            "url": p.url, 
-                            "ua": USER_AGENT, 
-                            "cookie": req_headers.get('Cookie', ''), 
-                            "referer": REFERER,
-                            "origin": req_headers.get('Origin', '')
-                        }
+        recent_posts = []
+        for post in posts:
+            post_time = datetime.strptime(post['created_time'], "%Y-%m-%dT%H:%M:%S%z")
+            age_seconds = (now_utc - post_time).total_seconds()
+            if age_seconds <= 3600: # Sirf pichle 1 ghante ki posts
+                recent_posts.append(post)
+
+        print(f"  [📊] Found {len(recent_posts)} post(s) created in the last 1 hour.")
+
+        for post in recent_posts:
+            post_id = post['id']
+            print(f"  [👉] Checking Post ID: {post_id}")
+            
+            comments_url = f"https://graph.facebook.com/v18.0/{post_id}/comments?fields=from&access_token={token}"
+            comments_data = requests.get(comments_url).json()
+            
+            already_commented = False
+            if 'data' in comments_data:
+                for comment in comments_data['data']:
+                    if 'from' in comment and comment['from'].get('id') == page_id:
+                        already_commented = True
                         break
-                if data: break
-            if data: break
             
-            elapsed = int(time.time() - start_time)
-            if elapsed % 15 == 0 and elapsed > 0:
-                print(f"  [Wait] {elapsed}s elapsed...")
-
-        if not data:
-            print("  [❌] M3U8 link NOT FOUND. WAF block or timeout.")
-            
-    except Exception as e: 
-        print(f"[❌ DrissionPage] Crashed during execution: {e}")
-        print(traceback.format_exc())
-    finally:
-        if page: page.quit()
-            
-    return data
-
-def calculate_expiry_time(url):
-    print("\n[⏰ Expiry Check] Calculating Token Expiry Time...")
-    try:
-        params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
-        exp = int(params.get('expires', params.get('e', [0]))[0])
-        if exp: 
-            exp_time = datetime.fromtimestamp(exp, PKT)
-            print(f"  [✅] Extracted Expiry: {exp_time.strftime('%I:%M:%S %p PKT')}")
-            return exp_time
-    except Exception as e: 
-        pass
-        
-    fallback = datetime.now(PKT) + timedelta(hours=2)
-    return fallback
-
-def get_page_id():
-    print("\n[🔍 FB Auth] Verifying Facebook Access Token...")
-    try:
-        res = requests.get("https://graph.facebook.com/v18.0/me", params={"access_token": FB_ACCESS_TOKEN, "fields": "id,name"}).json()
-        if 'id' in res: 
-            print(f"  [✅] Token is VALID. Connected to Page: {res.get('name')}")
-            return res.get('id')
-        else:
-            print(f"  [❌] Invalid Token response: {res}")
-    except Exception as e: 
-        print(f"  [❌ FB Auth] Request failed: {e}")
-    return None
-
-# ==========================================
-# WORKER 0 & 1: CAPTURE
-# ==========================================
-def worker_0_capture_frame(data, output_img):
-    print(f"\n[📸 Worker 0] Capturing a single frame from live stream...")
-    headers_cmd = f"User-Agent: {data['ua']}\r\nReferer: {data['referer']}\r\nCookie: {data['cookie']}"
-    cmd = ['ffmpeg', '-y', '-headers', headers_cmd, '-i', data['url'], '-vframes', '1', '-q:v', '2', output_img]
-    subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return os.path.exists(output_img)
-
-def worker_1_capture_video(data, filename, duration=10):
-    print(f"\n[🎥 Worker 1] Capturing {duration} seconds of video from live stream...")
-    headers_cmd = f"User-Agent: {data['ua']}\r\nReferer: {data['referer']}\r\nCookie: {data['cookie']}"
-    cmd = ['ffmpeg', '-y', '-headers', headers_cmd, '-i', data['url'], '-t', str(duration), '-c', 'copy', '-bsf:a', 'aac_adtstoasc', filename]
-    subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return os.path.exists(filename)
-
-# ==========================================
-# WORKER 2: VIDEO EDITING (PiP + Blur + Anti-Static Engine)
-# ==========================================
-def worker_2_edit_video(dynamic_vid, static_vid, custom_audio, output_vid):
-    print(f"\n[🎬 Worker 2] Starting Video Editor Engine with PiP Logic...")
-    try:
-        dyn_clip = VideoFileClip(dynamic_vid)
-        stat_clip = VideoFileClip(static_vid)
-        bg_image_path = "website_frame.png"
-        
-        if os.path.exists(bg_image_path):
-            bg_clip = ImageClip(bg_image_path).set_duration(dyn_clip.duration)
-            target_x, target_y, target_width, target_height = 0, 250, 1064, 565
-            pip_video = dyn_clip.resize((target_width, target_height)).set_position((target_x, target_y))
-            dyn_clip = CompositeVideoClip([bg_clip, pip_video])
-        else:
-            dyn_clip = dyn_clip.resize(stat_clip.size)
-
-        def blur(frame): 
-            return np.array(Image.fromarray(frame).filter(ImageFilter.GaussianBlur(20)))
-
-        dyn_clip = dyn_clip.fl_image(blur)
-        
-        # 🛠️ THE FIX: Size aur FPS ko 100% same karna
-        print("  [>] Synchronizing Size and FPS for perfect merging...")
-        dyn_clip = dyn_clip.resize(newsize=stat_clip.size)
-        dyn_clip = dyn_clip.set_fps(stat_clip.fps)
-        
-        # method="compose" se RGB static/noise ka issue hamesha ke liye block ho jayega
-        print("  [>] Concatenating clips using 'compose' method to avoid RGB static...")
-        merged = concatenate_videoclips([dyn_clip, stat_clip], method="compose")
-
-        audio = AudioFileClip(custom_audio)
-        final_audio = afx.audio_loop(audio, duration=merged.duration)
-        final_video = merged.set_audio(final_audio)
-
-        final_video.write_videofile(output_vid, codec="libx264", audio_codec="aac", fps=stat_clip.fps, preset="ultrafast", logger=None)
-        
-        dyn_clip.close(); stat_clip.close(); audio.close(); final_video.close()
-        if 'bg_clip' in locals(): bg_clip.close()
-
-        print("[✅ Worker 2] Video edited successfully.")
-        return True
-    except Exception as e: 
-        print(f"[❌ Worker 2] Editing Crashed: {e}")
-        return False
-
-# ==========================================
-# WORKER 3: 1-STEP FACEBOOK UPLOAD
-# ==========================================
-def worker_3_upload(video_path, page_id, title, desc, dynamic_thumb_path):
-    print(f"\n[📤 Worker 3] Preparing Facebook Upload...")
-    url = f"https://graph-video.facebook.com/v18.0/{page_id}/videos"
-    payload = {"title": title, "description": desc, "access_token": FB_ACCESS_TOKEN}
-    files_to_open = []
-    
-    try:
-        f_vid = open(video_path, "rb")
-        files_to_open.append(f_vid)
-        files = {"source": ("video.mp4", f_vid, "video/mp4")}
-        
-        if dynamic_thumb_path and os.path.exists(dynamic_thumb_path):
-            f_thumb = open(dynamic_thumb_path, "rb")
-            files_to_open.append(f_thumb)
-            files["thumb"] = (os.path.basename(dynamic_thumb_path), f_thumb, "image/png")
-
-        print("  [>] Uploading Video to Facebook...")
-        res = requests.post(url, data=payload, files=files).json()
-        
-        if "id" in res:
-            print(f"[✅ Worker 3] Upload SUCCESS! (Post ID: {res['id']})")
-            
-            # --- THE NEW ANTI-SPAM COMMENT DELAY LOGIC ---
-            comment_wait = random.randint(15, 50)
-            print(f"  [⏳] Anti-Spam: Waiting {comment_wait} seconds before dropping the comment...")
-            for sec in range(comment_wait, 0, -1):
-                print(f"  [-] Dropping link in {sec} seconds...", end='\r')
-                time.sleep(1)
-            print("                                              ", end='\r')
-            
-            comment_url = f"https://graph.facebook.com/v18.0/{res['id']}/comments"
-            
-            # --- THE NEW RANDOM COMMENT LOGIC ---
-            comment_text = random.choice(COMMENTS_LIST)
-            print(f"  [>] Posting Comment: {comment_text}")
-            
-            comment_img_path = "comment_image.jpeg" 
-            if os.path.exists(comment_img_path):
-                with open(comment_img_path, "rb") as img:
-                    requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN}, files={"source": img})
+            if already_commented:
+                print("  [✅] Author (Page) has ALREADY commented on this post. Skipping.")
             else:
-                requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN})
-            return True
-        else:
-             print(f"[❌ Worker 3] API Error: {res}")
-             return False
+                print("  [🚨] Author comment NOT FOUND! Placing Comment now...")
+                post_comment(post_id, token)
+
     except Exception as e:
-        print(f"[💥 Worker 3] Upload Crash: {e}")
-        return False
-    finally:
-        for f in files_to_open: f.close()
+        print(f"  [❌] Error while monitoring: {e}")
 
 # ==========================================
-# MAIN LOOP (THE BRAIN)
+# 🚀 MAIN LOOP
 # ==========================================
 def main():
-    print("\n" + "="*50)
-    print("   🚀 ULTIMATE HYBRID CLOUD VIDEO BOT STARTED")
-    print("="*50)
-    
-    page_id = get_page_id()
-    if not page_id: 
-        print("[🛑 System] Failed to get Page ID. Exiting.")
-        return 
+    if not ACTIVE_TOKEN:
+        print("\n[🛑 System] ERROR: Token is missing!")
+        print("Agar aapne 'Custom Token' select kiya hai, toh box mein token paste karna zaroori hai.")
+        print("Agar aapne koi aur Page select kiya hai, toh check karein ke Github Secrets mein token save hai ya nahi.")
+        return
 
-    data = get_link_with_headers()
-    if not data: 
-        print("[🛑 System] Failed to get initial M3U8 link. Exiting.")
-        return 
-        
-    expiry_dt = calculate_expiry_time(data['url'])
-    clip_counter = 1
-    next_run_triggered = False
+    print(f"\n[⏳] Monitoring loop started for {TARGET_PAGE}. Bot will check every 5 minutes...")
     
-    static_video = "main_video.mp4"
-    audio_file = "marya_live.mp3"
-    
-    print("\n[⚙️ System] Beginning Main Loop...")
+    cycle = 1
     while True:
         elapsed_time = time.time() - START_TIME
-        current_time = datetime.now(PKT)
-        time_left_seconds = (expiry_dt - current_time).total_seconds()
-        
-        print(f"\n" + "-"*50)
-        print(f"--- 🔄 STARTING VIDEO CYCLE #{clip_counter} ---")
-        print(f"  [-] Bot Uptime: {int(elapsed_time/60)} minutes")
-        print(f"  [-] Link Time Remaining: {int(time_left_seconds/60)} minutes")
-        print("-" * 50)
-        
-        if elapsed_time > RESTART_TRIGGER_TIME and not next_run_triggered:
-            trigger_next_run()
-            next_run_triggered = True 
-            
-        if elapsed_time > END_TIME_LIMIT: 
-            print("[🛑 System] Max Lifetime Reached. Exiting script gracefully.")
+        if elapsed_time > END_TIME_LIMIT:
+            print("\n[🛑 System] 6 Hours Limit Reached. Closing bot gracefully.")
             break
-        
-        if time_left_seconds <= 120:
-            print("  [🚨] Link is expiring soon! Pausing to fetch new link...")
-            new_data = get_link_with_headers()
-            if new_data:
-                data = new_data
-                expiry_dt = calculate_expiry_time(data['url'])
-            else:
-                print("  [⚠️] Failed to get new link. Retrying in 60 seconds...")
-                time.sleep(60); continue 
-        
-        title, desc = generate_unique_metadata(clip_counter)
-        
-        raw_frame = f"live_frame_{clip_counter}.jpg"
-        generated_thumb = f"studio_thumb_{clip_counter}.png"
-        raw_vid = f"raw_{clip_counter}.mp4"
-        final_vid = f"final_{clip_counter}.mp4"
-        
-        print("\n[⚡ Flow] Executing the Hybrid Action Flow...")
-        if worker_0_capture_frame(data, raw_frame):
-            if worker_0_5_generate_thumbnail(raw_frame, title, generated_thumb):
-                if worker_1_capture_video(data, raw_vid, duration=10):
-                    if worker_2_edit_video(raw_vid, static_video, audio_file, final_vid):
-                        worker_3_upload(final_vid, page_id, title, desc, generated_thumb)
-                    else:
-                        print("  [❌ Flow Broken] Worker 2 (Edit) failed.")
-                else:
-                    print("  [❌ Flow Broken] Worker 1 (Video Capture) failed.")
-            else:
-                print("  [❌ Flow Broken] Worker 0.5 (Thumbnail Gen) failed.")
-        else:
-            print("  [❌ Flow Broken] Worker 0 (Screenshot) failed.")
-        
-        print("\n[🧹 Cleanup] Running Garbage Collector...")
-        for temp_file in [raw_frame, generated_thumb, raw_vid, final_vid]:
-            if os.path.exists(temp_file): 
-                os.remove(temp_file)
-                print(f"  [-] Deleted: {temp_file}")
-                
-        # ⏳ THE NEW RANDOM WAIT COUNTDOWN (Anti-Spam)
-        wait_seconds = random.randint(240, 420)
-        print(f"\n[⏳ Cycle End] Cycle #{clip_counter} Complete. Waiting {wait_seconds} seconds before next run...")
-        for remaining in range(wait_seconds, 0, -1):
-            print(f"  [-] Next video will be captured in: {remaining} seconds...  ", end='\r')
-            time.sleep(1)
-            
-        print("\n  [>] Starting next cycle now!                               ")
-        clip_counter += 1
+
+        print(f"\n{'-'*50}")
+        print(f"--- 🔄 SCAN CYCLE #{cycle} ---")
+        print(f"{'-'*50}")
+
+        check_and_comment(ACTIVE_TOKEN)
+
+        print(f"\n[💤] Cycle #{cycle} complete. Sleeping for 5 minutes...")
+        time.sleep(WAIT_TIME)
+        cycle += 1
 
 if __name__ == "__main__":
     main()
@@ -543,603 +180,10 @@ if __name__ == "__main__":
 
 
 
-# import mimetypes 
-# import os
-# import time
-# import subprocess
-# import urllib.parse
-# import traceback
-# import requests
-# import random 
-# import numpy as np
-# import base64
-# from html2image import Html2Image
-# from PIL import Image, ImageFilter
 
-# # ==========================================
-# # 🦸‍♂️ THE SUPERMAN PATCH (For Pillow 10+)
-# # ==========================================
-# print("[⚙️ System] Checking Pillow version...")
-# if not hasattr(Image, 'ANTIALIAS'):
-#     Image.ANTIALIAS = Image.LANCZOS
-#     print("[✅ System] Superman Patch Applied for Pillow.")
 
-# from datetime import datetime, timezone, timedelta
 
-# # --- NAYA: DrissionPage Import (Selenium ki jagah) ---
-# from DrissionPage import ChromiumPage, ChromiumOptions
-
-# # MoviePy for Video Editing
-# print("[⚙️ System] Loading MoviePy modules (This might take a second)...")
-# from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips, ImageClip, CompositeVideoClip
-# import moviepy.audio.fx.all as afx
-# print("[✅ System] MoviePy modules loaded successfully.")
-
-# # ==========================================
-# # ⚙️ SETTINGS & TOKENS
-# # ==========================================
-# print("\n[⚙️ System] Initializing Settings and Environment Variables...")
-
-# FB_ACCESS_TOKEN = os.environ.get('FB_ACCESS_TOKEN', '').strip()
-# TITLES_INPUT = os.environ.get('TITLES_LIST', 'Live Match Today,,Watch Full Match DC vs GT').strip()
-# DESCS_INPUT = os.environ.get('DESCS_LIST', 'Watch the live action here').strip()
-# HASHTAGS = os.environ.get('HASHTAGS', '#IPL2026 #DCvsGT #CricketLovers #LiveMatch').strip()
-
-# PROXY_IP = os.environ.get('PROXY_IP', '31.59.20.176')
-# PROXY_PORT = os.environ.get('PROXY_PORT', '6754')
-# PROXY_USER = os.environ.get('PROXY_USER', 'ehhppbec')
-# PROXY_PASS = os.environ.get('PROXY_PASS', '5f69y4wngj70')
-# PROXY_URL = f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}"
-
-# # --- NAYA: BHALOCAST LINKS LOGIC ---
-# SOURCE_CHANNEL = os.environ.get('SOURCE_CHANNEL', 'willowextra')
-# BHALOCAST_LINKS = {
-#     'willowextra': "https://bhalocast.com/atoplay.php?v=wextres&hello=m1lko&expires=123456",
-#     'ptvskpr': "https://bhalocast.com/atoplay.php?v=ptvskpr&hello=m1lko&expires=123456",
-#     'star1kibich': "https://bhalocast.com/atoplay.php?v=star1kibich&hello=m1lko&expires=123456",
-#     'penguin_ptvskpr': "https://bhalocast.com/penguin.php?v=ptvskpr&hello=m1lko&expires=123456"
-# }
-
-# if SOURCE_CHANNEL == 'custom_url':
-#     TARGET_WEBSITE = os.environ.get('TARGET_URL', '').strip()
-# else:
-#     TARGET_WEBSITE = BHALOCAST_LINKS.get(SOURCE_CHANNEL, BHALOCAST_LINKS['willowextra'])
-
-# REFERER = "https://bhalocast.com/"
-# USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
-# # -----------------------------------
-
-# PKT = timezone(timedelta(hours=5))
-# WAIT_TIME_SECONDS = 300  
-# START_TIME = time.time()
-# RESTART_TRIGGER_TIME = (5 * 60 * 60) + (30 * 60) 
-# END_TIME_LIMIT = (5 * 60 * 60) + (50 * 60) 
-# print(f"[✅ System] Settings Loaded. Target: {TARGET_WEBSITE}")
-
-# # ==========================================
-# # 🌐 HTML2IMAGE THUMBNAIL ENGINE (PROJECT 5)
-# # ==========================================
-# print("[⚙️ System] Initializing HTML2Image Engine for Thumbnails...")
-# hti = Html2Image(size=(1280, 720), custom_flags=['--hide-scrollbars', '--no-sandbox', '--disable-gpu'])
-
-# def get_image_base64(image_path):
-#     print(f"  [>] Converting image '{image_path}' to Base64 format...")
-#     with open(image_path, "rb") as img_file:
-#         b64_string = base64.b64encode(img_file.read()).decode('utf-8')
-#         ext = image_path.split('.')[-1].lower()
-#         print(f"  [>] Conversion done. Extension detected: {ext}")
-#         if ext == 'png': return f"data:image/png;base64,{b64_string}"
-#         else: return f"data:image/jpeg;base64,{b64_string}"
-
-# def worker_0_5_generate_thumbnail(central_image_path, match_name_text, output_image_path):
-#     print(f"\n[🎨 Worker 0.5] Rendering Studio Thumbnail for: '{match_name_text}'")
-#     print(f"  [>] Checking if central image '{central_image_path}' exists...")
-#     if not os.path.exists(central_image_path): 
-#         print(f"  [❌ Worker 0.5] Central image NOT FOUND! Aborting thumbnail creation.")
-#         return False
-        
-#     try:
-#         b64_image = get_image_base64(central_image_path)
-#         print("  [>] Generating HTML/CSS template...")
-        
-#         html_code = f"""
-#         <!DOCTYPE html>
-#         <html>
-#         <head>
-#             <style>
-#                 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700;900&display=swap');
-#                 body {{ margin: 0; padding: 0; width: 1280px; height: 720px; background-color: #0f0f0f; font-family: 'Roboto', sans-serif; color: white; display: flex; flex-direction: column; overflow: hidden; }}
-#                 .header {{ height: 100px; display: flex; align-items: center; padding: 0 40px; justify-content: space-between; z-index: 10; }}
-#                 .logo-container {{ display: flex; align-items: center; gap: 20px; }}
-#                 .hamburger {{ display: flex; flex-direction: column; gap: 6px; }}
-#                 .hamburger div {{ width: 40px; height: 6px; background: white; }}
-#                 .logo {{ font-size: 50px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.6); }}
-#                 .live-badge {{ border: 4px solid #cc0000; border-radius: 12px; padding: 5px 20px; font-size: 40px; font-weight: 700; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 15px rgba(204,0,0,0.4); }}
-#                 .dot {{ color: #cc0000; text-shadow: 0 0 10px #cc0000; }}
-#                 .hero-container {{ position: relative; width: 100%; height: 440px; }}
-#                 .hero-img {{ width: 100%; height: 100%; object-fit: cover; }}
-#                 .gradient-fade {{ position: absolute; bottom: 0; width: 100%; height: 150px; background: linear-gradient(to bottom, transparent, #0f0f0f); }}
-#                 .pip-img {{ position: absolute; top: 30px; right: 40px; width: 40%; border: 6px solid white; box-shadow: -15px 15px 30px rgba(0,0,0,0.8); }}
-#                 .text-container {{ flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 10px 40px; }}
-#                 .main-title {{ font-size: 80px; font-weight: 900; line-height: 1.1; text-shadow: 6px 6px 15px rgba(0,0,0,0.9); }}
-#                 .live-text {{ color: #cc0000; text-shadow: 6px 6px 15px rgba(0,0,0,0.9), 0 0 15px rgba(204,0,0,0.8), 0 0 30px rgba(204,0,0,0.5); }}
-#                 .match-text {{ color: white; }}
-#             </style>
-#         </head>
-#         <body>
-#             <div class="header">
-#                 <div class="logo-container"><div class="hamburger"><div></div><div></div><div></div></div><div class="logo">SPORTSHUB</div></div>
-#                 <div class="live-badge"><span class="dot">●</span> LIVE</div>
-#             </div>
-#             <div class="hero-container">
-#                 <img src="{b64_image}" class="hero-img">
-#                 <div class="gradient-fade"></div> 
-#                 <img src="{b64_image}" class="pip-img">
-#             </div>
-#             <div class="text-container">
-#                 <div class="main-title">
-#                     <span class="live-text">LIVE NOW HERE: </span>
-#                     <span class="match-text">{match_name_text}</span>
-#                 </div>
-#             </div>
-#         </body>
-#         </html>
-#         """
-        
-#         print(f"  [>] Ordering Html2Image to take screenshot and save as '{output_image_path}'...")
-#         hti.screenshot(html_str=html_code, save_as=output_image_path)
-#         print(f"[✅ Worker 0.5] Thumbnail successfully generated: {output_image_path}")
-#         return True
-#     except Exception as e:
-#         print(f"[❌ Worker 0.5] Thumbnail Gen Error: {e}")
-#         return False
-
-# # ==========================================
-# # 🧠 ANTI-SPAM METADATA
-# # ==========================================
-# def generate_unique_metadata(clip_number):
-#     print(f"\n[🧠 Metadata] Generating Unique Titles and Descriptions for Clip #{clip_number}...")
-#     all_titles = [t.strip() for t in TITLES_INPUT.split(',,') if t.strip()]
-#     all_descriptions = [d.strip() for d in DESCS_INPUT.split(',,') if d.strip()]
-    
-#     if not all_titles: 
-#         all_titles = ["Live Match Today"]
-#     if not all_descriptions: 
-#         all_descriptions = ["Watch the live action here!"]
-    
-#     chosen_title = random.choice(all_titles)
-#     if len(chosen_title) > 250: 
-#         chosen_title = chosen_title[:247] + "..."
-        
-#     emojis = ["🔥", "🏏", "⚡", "🏆", "💥", "😱", "📺", "🚀"]
-#     emo = random.sample(emojis, 3) 
-#     current_time = datetime.now(PKT).strftime("%I:%M %p")
-
-#     tags_list = HASHTAGS.split() 
-#     random.shuffle(tags_list)    
-#     selected_4_tags = " ".join(tags_list[:4]) 
-    
-#     final_description = f"{chosen_title} {emo[0]} {emo[1]} {emo[2]}\n\n{random.choice(all_descriptions)}\n\n⏱️ Update: {current_time} | Clip #{clip_number}\n\n👇 Watch Full Match Link in First Comment!\n\n{selected_4_tags}"
-#     print("[✅ Metadata] Metadata generation complete.")
-#     return chosen_title, final_description
-
-# # ==========================================
-# # 🔄 RELAY RACE (AUTO RESTART)
-# # ==========================================
-# def trigger_next_run():
-#     print("\n[⏰ Relay Race] Attempting to trigger the next bot run via GitHub API...")
-#     token = os.environ.get('GH_PAT')
-#     repo = os.environ.get('GITHUB_REPOSITORY') 
-#     branch = os.environ.get('GITHUB_REF_NAME', 'main')
-#     url = f"https://api.github.com/repos/{repo}/actions/workflows/video_loop.yml/dispatches"
-#     headers = {"Accept": "application/vnd.github.v3+json", "Authorization": f"token {token}"}
-    
-#     data = {
-#         "ref": branch,
-#         "inputs": {
-#             "source_channel": SOURCE_CHANNEL,
-#             "target_url": os.environ.get('TARGET_URL', ''), 
-#             "proxy_ip": PROXY_IP, "proxy_port": PROXY_PORT,
-#             "proxy_user": PROXY_USER, "proxy_pass": PROXY_PASS,
-#             "titles_list": TITLES_INPUT, "descs_list": DESCS_INPUT, "hashtags": HASHTAGS
-#         }
-#     }
-#     try: 
-#         res = requests.post(url, headers=headers, json=data)
-#         if res.status_code == 204:
-#             print("[✅ Relay Race] Next Bot Triggered Successfully (Status 204).")
-#         else:
-#             print(f"[⚠️ Relay Race] Trigger sent but got unexpected status: {res.status_code}")
-#     except Exception as e: 
-#         print(f"[❌ Relay Race] Request failed: {e}")
-
-# # ==========================================
-# # STEP 1: DRISSIONPAGE LINK CHURANA (UPDATED)
-# # ==========================================
-# def get_link_with_headers():
-#     print("\n[🔍 DrissionPage] Starting Browser to steal M3U8 link (NO PROXY)...")
-#     opts = ChromiumOptions()
-#     opts.set_argument('--autoplay-policy=no-user-gesture-required')
-#     opts.set_argument('--no-sandbox')
-#     opts.set_argument('--disable-gpu')
-#     opts.set_argument('--disable-dev-shm-usage')
-#     opts.set_argument('--mute-audio')
-
-#     page = None
-#     data = None
-#     try:
-#         print("  [>] Launching browser...")
-#         page = ChromiumPage(addr_or_opts=opts)
-        
-#         print("  [>] Listening for 'm3u8' packets...")
-#         page.listen.start('m3u8')
-        
-#         print(f"  [>] Hitting Target URL: {TARGET_WEBSITE}")
-#         page.get(TARGET_WEBSITE)
-        
-#         print("  [⏳] Scanning network requests for up to 90 seconds...")
-#         start_time = time.time()
-        
-#         while time.time() - start_time < 90:
-#             for packet in page.listen.steps(count=1, timeout=3, gap=1):
-#                 if packet:
-#                     items = packet if isinstance(packet, list) else [packet]
-#                     for p in items:
-#                         print(f"  [✅ BINGO] M3U8 link found: {p.url}")
-#                         req_headers = p.request.headers if hasattr(p, 'request') else {}
-#                         data = {
-#                             "url": p.url, 
-#                             "ua": USER_AGENT, 
-#                             "cookie": req_headers.get('Cookie', ''), 
-#                             "referer": REFERER,
-#                             "origin": req_headers.get('Origin', '')
-#                         }
-#                         break
-#                 if data: break
-#             if data: break
-            
-#             elapsed = int(time.time() - start_time)
-#             if elapsed % 15 == 0 and elapsed > 0:
-#                 print(f"  [Wait] {elapsed}s elapsed...")
-
-#         if not data:
-#             print("  [❌] M3U8 link NOT FOUND. WAF block or timeout.")
-            
-#     except Exception as e: 
-#         print(f"[❌ DrissionPage] Crashed during execution: {e}")
-#         print(traceback.format_exc())
-#     finally:
-#         if page: 
-#             print("  [>] Quitting driver and closing browser...")
-#             page.quit()
-            
-#     return data
-
-# def calculate_expiry_time(url):
-#     print("\n[⏰ Expiry Check] Calculating Token Expiry Time...")
-#     try:
-#         params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
-#         exp = int(params.get('expires', params.get('e', [0]))[0])
-#         if exp: 
-#             exp_time = datetime.fromtimestamp(exp, PKT)
-#             print(f"  [✅] Extracted Expiry: {exp_time.strftime('%I:%M:%S %p PKT')}")
-#             return exp_time
-#     except Exception as e: 
-#         pass
-        
-#     fallback = datetime.now(PKT) + timedelta(hours=2)
-#     print(f"  [>] Using fallback expiry time: {fallback.strftime('%I:%M:%S %p PKT')}")
-#     return fallback
-
-# def get_page_id():
-#     print("\n[🔍 FB Auth] Verifying Facebook Access Token...")
-#     try:
-#         res = requests.get("https://graph.facebook.com/v18.0/me", params={"access_token": FB_ACCESS_TOKEN, "fields": "id,name"}).json()
-#         if 'id' in res: 
-#             print(f"  [✅] Token is VALID. Connected to Page: {res.get('name')}")
-#             return res.get('id')
-#         else:
-#             print(f"  [❌] Invalid Token response: {res}")
-#     except Exception as e: 
-#         print(f"  [❌ FB Auth] Request failed: {e}")
-#     return None
-
-# # ==========================================
-# # WORKER 0: SCREENSHOT CAPTURE
-# # ==========================================
-# def worker_0_capture_frame(data, output_img):
-#     print(f"\n[📸 Worker 0] Capturing a single frame from live stream...")
-#     headers_cmd = f"User-Agent: {data['ua']}\r\nReferer: {data['referer']}\r\nCookie: {data['cookie']}"
-    
-#     cmd = ['ffmpeg', '-y', '-headers', headers_cmd, '-i', data['url'], '-vframes', '1', '-q:v', '2', output_img]
-    
-#     subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-#     if os.path.exists(output_img):
-#         print(f"[✅ Worker 0] Screenshot captured successfully.")
-#         return True
-#     else:
-#         print(f"[❌ Worker 0] Failed to capture screenshot.")
-#         return False
-
-# # ==========================================
-# # WORKER 1: VIDEO CAPTURE
-# # ==========================================
-# def worker_1_capture_video(data, filename, duration=10):
-#     print(f"\n[🎥 Worker 1] Capturing {duration} seconds of video from live stream...")
-#     headers_cmd = f"User-Agent: {data['ua']}\r\nReferer: {data['referer']}\r\nCookie: {data['cookie']}"
-    
-#     cmd = ['ffmpeg', '-y', '-headers', headers_cmd, '-i', data['url'], '-t', str(duration), '-c', 'copy', '-bsf:a', 'aac_adtstoasc', filename]
-    
-#     subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-#     if os.path.exists(filename):
-#         print(f"[✅ Worker 1] Video chunk captured successfully.")
-#         return True
-#     else:
-#         print(f"[❌ Worker 1] Failed to capture video chunk.")
-#         return False
-
-# # ==========================================
-# # WORKER 2: VIDEO EDITING (PiP + Blur Engine)
-# # ==========================================
-
-# # ==========================================
-# # WORKER 2: VIDEO EDITING (PiP + Blur Engine)
-# # ==========================================
-# def worker_2_edit_video(dynamic_vid, static_vid, custom_audio, output_vid):
-#     print(f"\n[🎬 Worker 2] Starting Video Editor Engine with PiP Logic...")
-#     try:
-#         dyn_clip = VideoFileClip(dynamic_vid)
-#         stat_clip = VideoFileClip(static_vid)
-#         bg_image_path = "website_frame.png"
-        
-#         if os.path.exists(bg_image_path):
-#             bg_clip = ImageClip(bg_image_path).set_duration(dyn_clip.duration)
-#             target_x, target_y, target_width, target_height = 0, 250, 1064, 565
-#             pip_video = dyn_clip.resize((target_width, target_height)).set_position((target_x, target_y))
-#             dyn_clip = CompositeVideoClip([bg_clip, pip_video])
-#         else:
-#             dyn_clip = dyn_clip.resize(stat_clip.size)
-
-#         def blur(frame): 
-#             return np.array(Image.fromarray(frame).filter(ImageFilter.GaussianBlur(20)))
-
-#         dyn_clip = dyn_clip.fl_image(blur)
-        
-#         # =========================================================
-#         # 🛠️ THE FIX: Size aur FPS ko 100% same karna
-#         # =========================================================
-#         print("  [>] Synchronizing Size and FPS for perfect merging...")
-#         dyn_clip = dyn_clip.resize(newsize=stat_clip.size)
-#         dyn_clip = dyn_clip.set_fps(stat_clip.fps)
-        
-#         print("  [>] Concatenating clips using 'compose' method to avoid RGB static...")
-#         # method="compose" sab se zaroori lafz hai is issue ko khatam karne ke liye
-#         merged = concatenate_videoclips([dyn_clip, stat_clip], method="compose")
-#         # =========================================================
-
-#         audio = AudioFileClip(custom_audio)
-#         final_audio = afx.audio_loop(audio, duration=merged.duration)
-#         final_video = merged.set_audio(final_audio)
-
-#         final_video.write_videofile(output_vid, codec="libx264", audio_codec="aac", fps=stat_clip.fps, preset="ultrafast", logger=None)
-        
-#         dyn_clip.close(); stat_clip.close(); audio.close(); final_video.close()
-#         if 'bg_clip' in locals(): bg_clip.close()
-
-#         print("[✅ Worker 2] Video edited successfully with PiP and Blur.")
-#         return True
-#     except Exception as e: 
-#         print(f"[❌ Worker 2] Editing Crashed: {e}")
-#         return False
-
-
-
-
-
-
-
-
-# # def worker_2_edit_video(dynamic_vid, static_vid, custom_audio, output_vid):
-# #     print(f"\n[🎬 Worker 2] Starting Video Editor Engine with PiP Logic...")
-# #     try:
-# #         dyn_clip = VideoFileClip(dynamic_vid)
-# #         stat_clip = VideoFileClip(static_vid)
-# #         bg_image_path = "website_frame.png"
-        
-# #         if os.path.exists(bg_image_path):
-# #             bg_clip = ImageClip(bg_image_path).set_duration(dyn_clip.duration)
-# #             target_x, target_y, target_width, target_height = 0, 250, 1064, 565
-# #             pip_video = dyn_clip.resize((target_width, target_height)).set_position((target_x, target_y))
-# #             dyn_clip = CompositeVideoClip([bg_clip, pip_video])
-# #         else:
-# #             dyn_clip = dyn_clip.resize(stat_clip.size)
-
-# #         def blur(frame): 
-# #             return np.array(Image.fromarray(frame).filter(ImageFilter.GaussianBlur(20)))
-
-# #         dyn_clip = dyn_clip.fl_image(blur)
-# #         merged = concatenate_videoclips([dyn_clip, stat_clip])
-# #         audio = AudioFileClip(custom_audio)
-# #         final_audio = afx.audio_loop(audio, duration=merged.duration)
-# #         final_video = merged.set_audio(final_audio)
-
-# #         final_video.write_videofile(output_vid, codec="libx264", audio_codec="aac", fps=stat_clip.fps, preset="ultrafast", logger=None)
-        
-# #         dyn_clip.close(); stat_clip.close(); audio.close(); final_video.close()
-# #         if 'bg_clip' in locals(): bg_clip.close()
-
-# #         print("[✅ Worker 2] Video edited successfully with PiP and Blur.")
-# #         return True
-# #     except Exception as e: 
-# #         print(f"[❌ Worker 2] Editing Crashed: {e}")
-# #         return False
-
-# # ==========================================
-# # WORKER 3: 1-STEP FACEBOOK UPLOAD
-# # ==========================================
-# def worker_3_upload(video_path, page_id, title, desc, dynamic_thumb_path):
-#     print(f"\n[📤 Worker 3] Preparing Facebook Upload...")
-#     url = f"https://graph-video.facebook.com/v18.0/{page_id}/videos"
-#     payload = {"title": title, "description": desc, "access_token": FB_ACCESS_TOKEN}
-#     files_to_open = []
-    
-#     try:
-#         f_vid = open(video_path, "rb")
-#         files_to_open.append(f_vid)
-#         files = {"source": ("video.mp4", f_vid, "video/mp4")}
-        
-#         if dynamic_thumb_path and os.path.exists(dynamic_thumb_path):
-#             f_thumb = open(dynamic_thumb_path, "rb")
-#             files_to_open.append(f_thumb)
-#             files["thumb"] = (os.path.basename(dynamic_thumb_path), f_thumb, "image/png")
-
-#         res = requests.post(url, data=payload, files=files).json()
-        
-#         if "id" in res:
-#             print(f"[✅ Worker 3] Upload SUCCESS! (Post ID: {res['id']})")
-#             time.sleep(15) 
-            
-#             comment_url = f"https://graph.facebook.com/v18.0/{res['id']}/comments"
-#             comment_text = f"📺 Watch Full Match Without Buffering Here: https://bulbul4u-live.xyz"
-#             comment_img_path = "comment_image.jpeg" 
-            
-#             if os.path.exists(comment_img_path):
-#                 with open(comment_img_path, "rb") as img:
-#                     requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN}, files={"source": img})
-#             else:
-#                 requests.post(comment_url, data={"message": comment_text, "access_token": FB_ACCESS_TOKEN})
-#             return True
-#         else:
-#              print(f"[❌ Worker 3] API Error: {res}")
-#              return False
-#     except Exception as e:
-#         print(f"[💥 Worker 3] Upload Crash: {e}")
-#         return False
-#     finally:
-#         for f in files_to_open: f.close()
-
-# # ==========================================
-# # MAIN LOOP (THE BRAIN)
-# # ==========================================
-# def main():
-#     print("\n" + "="*50)
-#     print("   🚀 ULTIMATE HYBRID CLOUD VIDEO BOT STARTED")
-#     print("="*50)
-    
-#     page_id = get_page_id()
-#     if not page_id: 
-#         print("[🛑 System] Failed to get Page ID. Exiting.")
-#         return 
-
-#     data = get_link_with_headers()
-#     if not data: 
-#         print("[🛑 System] Failed to get initial M3U8 link. Exiting.")
-#         return 
-        
-#     expiry_dt = calculate_expiry_time(data['url'])
-#     clip_counter = 1
-#     next_run_triggered = False
-    
-#     static_video = "main_video.mp4"
-#     audio_file = "marya_live.mp3"
-    
-#     print("\n[⚙️ System] Beginning Main Loop...")
-#     while True:
-#         elapsed_time = time.time() - START_TIME
-#         current_time = datetime.now(PKT)
-#         time_left_seconds = (expiry_dt - current_time).total_seconds()
-        
-#         print(f"\n" + "-"*50)
-#         print(f"--- 🔄 STARTING VIDEO CYCLE #{clip_counter} ---")
-#         print(f"  [-] Bot Uptime: {int(elapsed_time/60)} minutes")
-#         print(f"  [-] Link Time Remaining: {int(time_left_seconds/60)} minutes")
-#         print("-" * 50)
-        
-#         if elapsed_time > RESTART_TRIGGER_TIME and not next_run_triggered:
-#             trigger_next_run()
-#             next_run_triggered = True 
-            
-#         if elapsed_time > END_TIME_LIMIT: 
-#             print("[🛑 System] Max Lifetime Reached. Exiting script gracefully.")
-#             break
-        
-#         if time_left_seconds <= 120:
-#             print("  [🚨] Link is expiring soon! Pausing to fetch new link...")
-#             new_data = get_link_with_headers()
-#             if new_data:
-#                 data = new_data
-#                 expiry_dt = calculate_expiry_time(data['url'])
-#             else:
-#                 print("  [⚠️] Failed to get new link. Retrying in 60 seconds...")
-#                 time.sleep(60); continue 
-        
-#         title, desc = generate_unique_metadata(clip_counter)
-        
-#         raw_frame = f"live_frame_{clip_counter}.jpg"
-#         generated_thumb = f"studio_thumb_{clip_counter}.png"
-#         raw_vid = f"raw_{clip_counter}.mp4"
-#         final_vid = f"final_{clip_counter}.mp4"
-        
-#         print("\n[⚡ Flow] Executing the Hybrid Action Flow...")
-#         if worker_0_capture_frame(data, raw_frame):
-#             if worker_0_5_generate_thumbnail(raw_frame, title, generated_thumb):
-#                 if worker_1_capture_video(data, raw_vid, duration=10):
-#                     if worker_2_edit_video(raw_vid, static_video, audio_file, final_vid):
-#                         worker_3_upload(final_vid, page_id, title, desc, generated_thumb)
-#                     else:
-#                         print("  [❌ Flow Broken] Worker 2 (Edit) failed.")
-#                 else:
-#                     print("  [❌ Flow Broken] Worker 1 (Video Capture) failed.")
-#             else:
-#                 print("  [❌ Flow Broken] Worker 0.5 (Thumbnail Gen) failed.")
-#         else:
-#             print("  [❌ Flow Broken] Worker 0 (Screenshot) failed.")
-        
-#         print("\n[🧹 Cleanup] Running Garbage Collector...")
-#         for temp_file in [raw_frame, generated_thumb, raw_vid, final_vid]:
-#             if os.path.exists(temp_file): 
-#                 os.remove(temp_file)
-#                 print(f"  [-] Deleted: {temp_file}")
-            
-#         print(f"\n[⏳ Cycle End] Cycle #{clip_counter} Complete. Waiting {WAIT_TIME_SECONDS} seconds before next run...")
-#         clip_counter += 1
-#         time.sleep(WAIT_TIME_SECONDS)
-
-# if __name__ == "__main__":
-#     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ============================================ main code below starts ==================================
+# ============================================ main code below starts, lekin iss me pthon m3u8 link capture nahey kar raha hai, iss liye isko maney javascript mei kar deya hai dai khaisra sra and aab oopper wala code srf facebook page mei post ko monitor karey ga and post par commnet karey ga 1 hour waley latest post and 5 min k break between   ==================================
 
 
 
