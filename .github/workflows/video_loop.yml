@@ -1,66 +1,25 @@
-name: Ultimate Hybrid Video Bot
+name: FB Post Comment Monitor
 
 on:
   workflow_dispatch:
     inputs:
-      fb_target_page:
-        description: 'Select Facebook Page for Upload'
+      target_page:
+        description: 'Select Page to Monitor (Dropdown)'
         required: true
         type: choice
         options:
-          - 'Primary_Page'
-          - 'Secondary_Page'
-        default: 'Primary_Page'
-      source_channel:
-        description: 'Select Match Link (Bhalocast)'
-        required: true
-        type: choice
-        options:
-          - 'willowextra'
-          - 'ptvskpr'
-          - 'star1kibich'
-          - 'penguin_ptvskpr'
-          - 'custom_url'
-        default: 'willowextra'
-      target_url:
-        description: 'Custom URL (Agar upar Custom select kiya ho)'
+          - 'Primary Page'
+          - 'Secondary Page'
+          - 'Page 3'
+          - 'Page 4'
+          - 'Custom Token (Below)'
+      custom_token:
+        description: 'Paste Token here ONLY if "Custom Token" is selected above'
         required: false
-        default: ''
-      titles_list:
-        description: 'Titles Array (Separate with ,, e.g. Title 1 ,, Title 2)'
-        required: true
-        default: 'Delhi Capitals vs Gujarat Titans Live Match Today,,Blockbuster Match DC vs GT,,Watch HD Stream Delhi Capitals vs Gujarat Titans'
-      descs_list:
-        description: 'Descriptions Array (Separate with ,, )'
-        required: true
-        default: 'DC take on GT in the latest IPL match. Watch the live action here without buffer,,The best IPL teams DC and GT face off. Click the link in comments for full buffer-free stream,,DC vs GT is a high-voltage clash. Witness every boundary and wicket. Full buffer-free stream details in comments! 👇'
-      hashtags:
-        description: 'Hashtags (Space separated)'
-        required: true
-        default: '#IPL2026 #DCvsGT #DelhiCapitals #GujaratTitans #IPLLive #TataIPL #T20Cricket #CricketLovers #LiveMatch'
-      thumbnail_image_name:
-        description: 'Thumbnail Name (Leave empty! Bot ab stream se auto-generate karega)'
-        required: false
-        default: ''
-      proxy_ip:
-        description: 'Proxy IP Address (For FFmpeg only)'
-        required: true
-        default: '31.59.20.176'
-      proxy_port:
-        description: 'Proxy Port'
-        required: true
-        default: '6754'
-      proxy_user:
-        description: 'Proxy Username'
-        required: true
-        default: 'dgmtstlf'
-      proxy_pass:
-        description: 'Proxy Password'
-        required: true
-        default: 'pm4wnuro0gy9'
+        type: string
 
 jobs:
-  run-bot:
+  run-monitor-bot:
     runs-on: ubuntu-latest
     timeout-minutes: 360 # 6 Ghante ki Full limit
 
@@ -68,42 +27,27 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Python Install Karna
+    - name: Setup Node/Python Environment
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
 
-    - name: Install System Tools & Real Google Chrome (with Xvfb)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg xvfb imagemagick
-        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-        sudo apt install -y ./google-chrome-stable_current_amd64.deb
-
     - name: Install Python Requirements
       run: |
-        python -m pip install --upgrade pip
-        pip install DrissionPage requests moviepy==1.0.3 numpy pillow html2image
+        pip install requests
 
-    - name: Start The Bot with Virtual Screen
+    - name: Start The Monitoring Bot
       env:
-        FB_TARGET_PAGE: ${{ inputs.fb_target_page }}
-        FB_TOKEN_PRIMARY: ${{ secrets.FB_TOKEN_PRIMARY }}
-        FB_TOKEN_SECONDARY: ${{ secrets.FB_TOKEN_SECONDARY }}
-        GH_PAT: ${{ secrets.GH_PAT }}
-        GITHUB_REPOSITORY: ${{ github.repository }}
-        GITHUB_REF_NAME: ${{ github.ref_name }}
-        SOURCE_CHANNEL: ${{ inputs.source_channel }}
-        TITLES_LIST: ${{ inputs.titles_list }}
-        DESCS_LIST: ${{ inputs.descs_list }}
-        HASHTAGS: ${{ inputs.hashtags }}
-        TARGET_URL: ${{ inputs.target_url }}
-        THUMBNAIL_IMAGE_NAME: ${{ inputs.thumbnail_image_name }} 
-        PROXY_IP: ${{ inputs.proxy_ip }}
-        PROXY_PORT: ${{ inputs.proxy_port }}
-        PROXY_USER: ${{ inputs.proxy_user }}
-        PROXY_PASS: ${{ inputs.proxy_pass }}
-      run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python -u video_bot.py
+        TARGET_PAGE: ${{ inputs.target_page }}
+        CUSTOM_TOKEN: ${{ inputs.custom_token }}
+        
+        # 🔑 Yahan aap apne saare secrets link kar dein
+        PRIMARY_TOKEN: ${{ secrets.PRIMARY_FB_TOKEN }}
+        SECONDARY_TOKEN: ${{ secrets.SECONDARY_FB_TOKEN }}
+        TOKEN_3: ${{ secrets.FB_TOKEN_3 }}
+        TOKEN_4: ${{ secrets.FB_TOKEN_4 }}
+        
+      run: python -u fb_monitor.py
 
 
 
@@ -117,129 +61,7 @@ jobs:
 
 
 
-
-
-
-
-
-
-
-
-
-
-# name: Ultimate Hybrid Video Bot
-
-# on:
-#   workflow_dispatch:
-#     inputs:
-#       source_channel:
-#         description: 'Select Match Link (Bhalocast)'
-#         required: true
-#         type: choice
-#         options:
-#           - 'willowextra'
-#           - 'ptvskpr'
-#           - 'star1kibich'
-#           - 'penguin_ptvskpr'
-#           - 'custom_url'
-#         default: 'willowextra'
-#       target_url:
-#         description: 'Custom URL (Agar upar Custom select kiya ho)'
-#         required: false
-#         default: ''
-#       titles_list:
-#         description: 'Titles Array (Separate with ,, e.g. Title 1 ,, Title 2)'
-#         required: true
-#         default: 'Delhi Capitals vs Gujarat Titans Live Match Today,,Blockbuster Match DC vs GT,,Watch HD Stream Delhi Capitals vs Gujarat Titans'
-#       descs_list:
-#         description: 'Descriptions Array (Separate with ,, )'
-#         required: true
-#         default: 'DC take on GT in the latest IPL match. Watch the live action here without buffer,,The best IPL teams DC and GT face off. Click the link in comments for full buffer-free stream,,DC vs GT is a high-voltage clash. Witness every boundary and wicket. Full buffer-free stream details in comments! 👇'
-#       hashtags:
-#         description: 'Hashtags (Space separated)'
-#         required: true
-#         default: '#IPL2026 #DCvsGT #DelhiCapitals #GujaratTitans #IPLLive #TataIPL #T20Cricket #CricketLovers #LiveMatch'
-#       thumbnail_image_name:
-#         description: 'Thumbnail Name (Leave empty! Bot ab stream se auto-generate karega)'
-#         required: false
-#         default: ''
-#       proxy_ip:
-#         description: 'Proxy IP Address (For FFmpeg only)'
-#         required: true
-#         default: '31.59.20.176'
-#       proxy_port:
-#         description: 'Proxy Port'
-#         required: true
-#         default: '6754'
-#       proxy_user:
-#         description: 'Proxy Username'
-#         required: true
-#         default: 'dgmtstlf'
-#       proxy_pass:
-#         description: 'Proxy Password'
-#         required: true
-#         default: 'pm4wnuro0gy9'
-
-# jobs:
-#   run-bot:
-#     runs-on: ubuntu-latest
-#     timeout-minutes: 360 # 6 Ghante ki Full limit
-
-#     steps:
-#     - name: Checkout Code
-#       uses: actions/checkout@v3
-
-#     - name: Python Install Karna
-#       uses: actions/setup-python@v4
-#       with:
-#         python-version: '3.10'
-
-#     - name: Install System Tools & Real Google Chrome (with Xvfb)
-#       run: |
-#         sudo apt-get update
-#         sudo apt-get install -y ffmpeg xvfb imagemagick
-#         wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-#         sudo apt install -y ./google-chrome-stable_current_amd64.deb
-
-#     - name: Install Python Requirements
-#       # ✨ YAHAN DrissionPage ADD KIYA HAI AUR SELENIUM HATA DIYA ✨
-#       run: |
-#         python -m pip install --upgrade pip
-#         pip install DrissionPage requests moviepy==1.0.3 numpy pillow html2image
-
-#     - name: Start The Bot with Virtual Screen
-#       env:
-#         FB_ACCESS_TOKEN: ${{ secrets.FB_ACCESS_TOKEN }} 
-#         GH_PAT: ${{ secrets.GH_PAT }}
-#         GITHUB_REPOSITORY: ${{ github.repository }}
-#         GITHUB_REF_NAME: ${{ github.ref_name }}
-#         SOURCE_CHANNEL: ${{ inputs.source_channel }}
-#         TITLES_LIST: ${{ inputs.titles_list }}
-#         DESCS_LIST: ${{ inputs.descs_list }}
-#         HASHTAGS: ${{ inputs.hashtags }}
-#         TARGET_URL: ${{ inputs.target_url }}
-#         THUMBNAIL_IMAGE_NAME: ${{ inputs.thumbnail_image_name }} 
-#         PROXY_IP: ${{ inputs.proxy_ip }}
-#         PROXY_PORT: ${{ inputs.proxy_port }}
-#         PROXY_USER: ${{ inputs.proxy_user }}
-#         PROXY_PASS: ${{ inputs.proxy_pass }}
-#       # Python script ka naam wahi rakha hai jo aapne diya tha (video_bot.py)
-#       run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python -u video_bot.py
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ============================================ main code below starts ==================================
-
+# ============================================ main code below starts, lekin iss me pthon m3u8 link capture nahey kar raha hai, iss liye isko maney javascript mei kar deya hai dai khaisra sra and aab oopper wala code srf facebook page mei post ko monitor karey ga and post par commnet karey ga 1 hour waley latest post and 5 min k break between   ==================================
 
 
 
