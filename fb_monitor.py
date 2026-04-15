@@ -58,9 +58,7 @@ def post_comment(post_id, token):
         if os.path.exists(COMMENT_IMG_PATH):
             print("  [📸] Comment Image found! Posting Comment WITH Photo...")
             with open(COMMENT_IMG_PATH, "rb") as img:
-                # 🛠️ FIX: Proper MIME type add kiya gaya hai
-                files = {"source": ("comment_image.jpeg", img, "image/jpeg")}
-                res = requests.post(comment_url, data={"message": COMMENT_TEXT, "access_token": token}, files=files).json()
+                res = requests.post(comment_url, data={"message": COMMENT_TEXT, "access_token": token}, files={"source": img}).json()
         else:
             print("  [📝] No comment image found. Posting TEXT-ONLY Comment...")
             res = requests.post(comment_url, data={"message": COMMENT_TEXT, "access_token": token}).json()
@@ -72,7 +70,7 @@ def post_comment(post_id, token):
     except Exception as e:
         print(f"  [❌] Crash while posting comment: {e}")
 
-# 🚀 THUMBNAIL ENGINE (WITH MIME TYPE FIX)
+# 🚀 FORCE THUMBNAIL FUNCTION (REEL & UPLOADED VIDEO FIX)
 def update_video_thumbnail(post_id, token):
     if not os.path.exists(VIDEO_THUMBNAIL_PATH):
         print(f"  [⚠️] '{VIDEO_THUMBNAIL_PATH}' repo mein nahi mili. Thumbnail update skip kar raha hoon.")
@@ -90,21 +88,21 @@ def update_video_thumbnail(post_id, token):
             video_id = attachments[0]['target']['id']
             
         if video_id:
-            print(f"  [>] Video ID found: {video_id}. Uploading new Thumbnail...")
+            print(f"  [>] Video ID found: {video_id}. Uploading new Thumbnail and forcing it as default...")
             
             with open(VIDEO_THUMBNAIL_PATH, "rb") as thumb_file:
-                # 🛠️ THE FIX: Facebook ko explicitly batana ke yeh PNG Image hai warna wo ignore kar dega!
-                files = {"thumb": ("thumbnail.png", thumb_file, "image/png")}
+                # 🛠️ THE FIX: Uploaded Videos aur Reels ke liye direct '/thumbnails' par hit karna zaroori hai
+                files = {"source": ("thumbnail.png", thumb_file, "image/png")}
                 
+                # is_preferred=true forces FB to set this specific upload as the cover
                 res = requests.post(
-                    f"https://graph.facebook.com/v18.0/{video_id}", 
-                    data={"access_token": token}, 
+                    f"https://graph.facebook.com/v18.0/{video_id}/thumbnails", 
+                    data={"access_token": token, "is_preferred": "true"}, 
                     files=files
                 ).json()
                 
             if res.get('success'):
                 print("  [✅] Video Thumbnail (Cover Photo) Updated Successfully!")
-                print("  [💡] Note: Agar video abhi LIVE hai, toh Facebook isay dikhane mein 1-2 minute le sakta hai. Page refresh karein.")
             else:
                 print(f"  [❌] Thumbnail update failed: {res}")
         else:
@@ -136,7 +134,7 @@ def check_and_comment(token):
         for post in posts:
             post_time = datetime.strptime(post['created_time'], "%Y-%m-%dT%H:%M:%S%z")
             age_seconds = (now_utc - post_time).total_seconds()
-            if age_seconds <= 3600: # Sirf pichle 1 ghante ki posts
+            if age_seconds <= 3600:
                 recent_posts.append(post)
 
         print(f"  [📊] Found {len(recent_posts)} post(s) created in the last 1 hour.")
@@ -159,11 +157,7 @@ def check_and_comment(token):
                 print("  [✅] Author (Page) has ALREADY commented on this post. Skipping.")
             else:
                 print("  [🚨] Author comment NOT FOUND! Placing Comment & Thumbnail now...")
-                
-                # 1. Pehle comment karega
                 post_comment(post_id, token)
-                
-                # 2. Phir Thumbnail update karega!
                 update_video_thumbnail(post_id, token)
 
     except Exception as e:
@@ -200,6 +194,224 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# import os
+# import time
+# import requests
+# from datetime import datetime, timezone
+
+# print("\n" + "="*50)
+# print("   🚀 FACEBOOK PAGE MONITOR (THUMBNAIL + COMMENT EDITION)")
+# print("="*50)
+
+# # ==========================================
+# # ⚙️ SETTINGS & TOKENS
+# # ==========================================
+# COMMENT_TEXT = "📺 Watch Full Match Without Buffering Here: https://bulbul4u-live.xyz"
+# COMMENT_IMG_PATH = "comment_image.jpeg"
+# VIDEO_THUMBNAIL_PATH = "thumbnail.png" # 🖼️ Yeh video ke cover par lagegi
+
+# START_TIME = time.time()
+# END_TIME_LIMIT = (5 * 60 * 60) + (50 * 60)  # 5 hours 50 mins limit
+# WAIT_TIME = 300  # 5 Minutes wait between checks
+
+# # 🎯 USER SELECTION PULL KARNA
+# TARGET_PAGE = os.environ.get('TARGET_PAGE', 'Primary Page')
+# CUSTOM_TOKEN = os.environ.get('CUSTOM_TOKEN', '').strip()
+
+# # 🗄️ TOKENS DICTIONARY
+# AVAILABLE_TOKENS = {
+#     'Primary Page': os.environ.get('PRIMARY_TOKEN', '').strip(),
+#     'Secondary Page': os.environ.get('SECONDARY_TOKEN', '').strip(),
+#     'Page 3': os.environ.get('TOKEN_3', '').strip(),
+#     'Page 4': os.environ.get('TOKEN_4', '').strip(),
+# }
+
+# # 🧠 SMART SELECTION LOGIC
+# ACTIVE_TOKEN = ""
+# if TARGET_PAGE == 'Custom Token (Below)':
+#     ACTIVE_TOKEN = CUSTOM_TOKEN
+#     print(f"[⚙️] Mode: Custom Token Provide kiya gaya hai.")
+# else:
+#     ACTIVE_TOKEN = AVAILABLE_TOKENS.get(TARGET_PAGE, "")
+#     print(f"[⚙️] Mode: '{TARGET_PAGE}' Select kiya gaya hai.")
+
+# # ==========================================
+# # 🛠️ CORE FUNCTIONS
+# # ==========================================
+# def get_page_info(token):
+#     try:
+#         res = requests.get("https://graph.facebook.com/v18.0/me", params={"access_token": token, "fields": "id,name"}).json()
+#         if 'id' in res: return res['id'], res['name']
+#     except Exception as e:
+#         print(f"  [❌] Token verification failed: {e}")
+#     return None, None
+
+# def post_comment(post_id, token):
+#     print(f"  [>] Posting promotional comment on {post_id}...")
+#     comment_url = f"https://graph.facebook.com/v18.0/{post_id}/comments"
+    
+#     try:
+#         if os.path.exists(COMMENT_IMG_PATH):
+#             print("  [📸] Comment Image found! Posting Comment WITH Photo...")
+#             with open(COMMENT_IMG_PATH, "rb") as img:
+#                 # 🛠️ FIX: Proper MIME type add kiya gaya hai
+#                 files = {"source": ("comment_image.jpeg", img, "image/jpeg")}
+#                 res = requests.post(comment_url, data={"message": COMMENT_TEXT, "access_token": token}, files=files).json()
+#         else:
+#             print("  [📝] No comment image found. Posting TEXT-ONLY Comment...")
+#             res = requests.post(comment_url, data={"message": COMMENT_TEXT, "access_token": token}).json()
+
+#         if 'id' in res:
+#             print(f"  [✅] Comment Placed Successfully! Comment ID: {res['id']}")
+#         else:
+#             print(f"  [❌] Error posting comment: {res}")
+#     except Exception as e:
+#         print(f"  [❌] Crash while posting comment: {e}")
+
+# # 🚀 THUMBNAIL ENGINE (WITH MIME TYPE FIX)
+# def update_video_thumbnail(post_id, token):
+#     if not os.path.exists(VIDEO_THUMBNAIL_PATH):
+#         print(f"  [⚠️] '{VIDEO_THUMBNAIL_PATH}' repo mein nahi mili. Thumbnail update skip kar raha hoon.")
+#         return
+
+#     print(f"  [🖼️] Checking if post contains a video to update its thumbnail...")
+#     try:
+#         attach_url = f"https://graph.facebook.com/v18.0/{post_id}?fields=attachments&access_token={token}"
+#         attach_data = requests.get(attach_url).json()
+        
+#         video_id = None
+#         attachments = attach_data.get('attachments', {}).get('data', [])
+        
+#         if attachments and 'target' in attachments[0] and 'id' in attachments[0]['target']:
+#             video_id = attachments[0]['target']['id']
+            
+#         if video_id:
+#             print(f"  [>] Video ID found: {video_id}. Uploading new Thumbnail...")
+            
+#             with open(VIDEO_THUMBNAIL_PATH, "rb") as thumb_file:
+#                 # 🛠️ THE FIX: Facebook ko explicitly batana ke yeh PNG Image hai warna wo ignore kar dega!
+#                 files = {"thumb": ("thumbnail.png", thumb_file, "image/png")}
+                
+#                 res = requests.post(
+#                     f"https://graph.facebook.com/v18.0/{video_id}", 
+#                     data={"access_token": token}, 
+#                     files=files
+#                 ).json()
+                
+#             if res.get('success'):
+#                 print("  [✅] Video Thumbnail (Cover Photo) Updated Successfully!")
+#                 print("  [💡] Note: Agar video abhi LIVE hai, toh Facebook isay dikhane mein 1-2 minute le sakta hai. Page refresh karein.")
+#             else:
+#                 print(f"  [❌] Thumbnail update failed: {res}")
+#         else:
+#             print("  [⚠️] Koi Video attach nahi mili (Yeh shayad text/photo post hai).")
+            
+#     except Exception as e:
+#         print(f"  [❌] Crash while updating thumbnail: {e}")
+
+# def check_and_comment(token):
+#     page_id, page_name = get_page_info(token)
+#     if not page_id:
+#         print(f"  [❌] Invalid Token! Could not authenticate with Facebook API.")
+#         return
+
+#     print(f"\n[🔍] Monitoring Page: {page_name} (ID: {page_id})")
+    
+#     try:
+#         posts_url = f"https://graph.facebook.com/v18.0/{page_id}/posts?fields=id,created_time&access_token={token}"
+#         posts_data = requests.get(posts_url).json()
+        
+#         if 'data' not in posts_data:
+#             print(f"  [⚠️] Could not fetch posts. API Response: {posts_data}")
+#             return
+            
+#         posts = posts_data['data']
+#         now_utc = datetime.now(timezone.utc)
+        
+#         recent_posts = []
+#         for post in posts:
+#             post_time = datetime.strptime(post['created_time'], "%Y-%m-%dT%H:%M:%S%z")
+#             age_seconds = (now_utc - post_time).total_seconds()
+#             if age_seconds <= 3600: # Sirf pichle 1 ghante ki posts
+#                 recent_posts.append(post)
+
+#         print(f"  [📊] Found {len(recent_posts)} post(s) created in the last 1 hour.")
+
+#         for post in recent_posts:
+#             post_id = post['id']
+#             print(f"  [👉] Checking Post ID: {post_id}")
+            
+#             comments_url = f"https://graph.facebook.com/v18.0/{post_id}/comments?fields=from&access_token={token}"
+#             comments_data = requests.get(comments_url).json()
+            
+#             already_commented = False
+#             if 'data' in comments_data:
+#                 for comment in comments_data['data']:
+#                     if 'from' in comment and comment['from'].get('id') == page_id:
+#                         already_commented = True
+#                         break
+            
+#             if already_commented:
+#                 print("  [✅] Author (Page) has ALREADY commented on this post. Skipping.")
+#             else:
+#                 print("  [🚨] Author comment NOT FOUND! Placing Comment & Thumbnail now...")
+                
+#                 # 1. Pehle comment karega
+#                 post_comment(post_id, token)
+                
+#                 # 2. Phir Thumbnail update karega!
+#                 update_video_thumbnail(post_id, token)
+
+#     except Exception as e:
+#         print(f"  [❌] Error while monitoring: {e}")
+
+# # ==========================================
+# # 🚀 MAIN LOOP
+# # ==========================================
+# def main():
+#     if not ACTIVE_TOKEN:
+#         print("\n[🛑 System] ERROR: Token is missing!")
+#         print("Agar aapne 'Custom Token' select kiya hai, toh box mein token paste karna zaroori hai.")
+#         print("Agar aapne koi aur Page select kiya hai, toh check karein ke Github Secrets mein token save hai ya nahi.")
+#         return
+
+#     print(f"\n[⏳] Monitoring loop started for '{TARGET_PAGE}'. Bot will check every 5 minutes...")
+    
+#     cycle = 1
+#     while True:
+#         elapsed_time = time.time() - START_TIME
+#         if elapsed_time > END_TIME_LIMIT:
+#             print("\n[🛑 System] 6 Hours Limit Reached. Closing bot gracefully.")
+#             break
+
+#         print(f"\n{'-'*50}")
+#         print(f"--- 🔄 SCAN CYCLE #{cycle} ---")
+#         print(f"{'-'*50}")
+
+#         check_and_comment(ACTIVE_TOKEN)
+
+#         print(f"\n[💤] Cycle #{cycle} complete. Sleeping for 5 minutes...")
+#         time.sleep(WAIT_TIME)
+#         cycle += 1
+
+# if __name__ == "__main__":
+#     main()
 
 
 
