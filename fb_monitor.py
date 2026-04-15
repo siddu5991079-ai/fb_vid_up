@@ -1,3 +1,12 @@
+
+
+
+
+
+# ============= thsi code very good work, yeh comment bey karta hai and thumbnail bey successfully apply akrta hai lekin maney thumbnail waley ko commnet kya hai qunky yeh 2 aab mei try karta hu k yeh "FB-Hybrid-Cloud_2" iss me karo , iss ko isliye comment kya hai qunky yeh wallah srf iss repo mei joo image hai "thumbnail.png" name se srf usko apply kar hai . mei dynamic bana chta hu ====================== 
+
+
+
 import os
 import time
 import requests
@@ -71,45 +80,45 @@ def post_comment(post_id, token):
         print(f"  [❌] Crash while posting comment: {e}")
 
 # 🚀 FORCE THUMBNAIL FUNCTION (REEL & UPLOADED VIDEO FIX)
-def update_video_thumbnail(post_id, token):
-    if not os.path.exists(VIDEO_THUMBNAIL_PATH):
-        print(f"  [⚠️] '{VIDEO_THUMBNAIL_PATH}' repo mein nahi mili. Thumbnail update skip kar raha hoon.")
-        return
+# def update_video_thumbnail(post_id, token):
+#     if not os.path.exists(VIDEO_THUMBNAIL_PATH):
+#         print(f"  [⚠️] '{VIDEO_THUMBNAIL_PATH}' repo mein nahi mili. Thumbnail update skip kar raha hoon.")
+#         return
 
-    print(f"  [🖼️] Checking if post contains a video to update its thumbnail...")
-    try:
-        attach_url = f"https://graph.facebook.com/v18.0/{post_id}?fields=attachments&access_token={token}"
-        attach_data = requests.get(attach_url).json()
+#     print(f"  [🖼️] Checking if post contains a video to update its thumbnail...")
+#     try:
+#         attach_url = f"https://graph.facebook.com/v18.0/{post_id}?fields=attachments&access_token={token}"
+#         attach_data = requests.get(attach_url).json()
         
-        video_id = None
-        attachments = attach_data.get('attachments', {}).get('data', [])
+#         video_id = None
+#         attachments = attach_data.get('attachments', {}).get('data', [])
         
-        if attachments and 'target' in attachments[0] and 'id' in attachments[0]['target']:
-            video_id = attachments[0]['target']['id']
+#         if attachments and 'target' in attachments[0] and 'id' in attachments[0]['target']:
+#             video_id = attachments[0]['target']['id']
             
-        if video_id:
-            print(f"  [>] Video ID found: {video_id}. Uploading new Thumbnail and forcing it as default...")
+#         if video_id:
+#             print(f"  [>] Video ID found: {video_id}. Uploading new Thumbnail and forcing it as default...")
             
-            with open(VIDEO_THUMBNAIL_PATH, "rb") as thumb_file:
-                # 🛠️ THE FIX: Uploaded Videos aur Reels ke liye direct '/thumbnails' par hit karna zaroori hai
-                files = {"source": ("thumbnail.png", thumb_file, "image/png")}
+#             with open(VIDEO_THUMBNAIL_PATH, "rb") as thumb_file:
+#                 # 🛠️ THE FIX: Uploaded Videos aur Reels ke liye direct '/thumbnails' par hit karna zaroori hai
+#                 files = {"source": ("thumbnail.png", thumb_file, "image/png")}
                 
-                # is_preferred=true forces FB to set this specific upload as the cover
-                res = requests.post(
-                    f"https://graph.facebook.com/v18.0/{video_id}/thumbnails", 
-                    data={"access_token": token, "is_preferred": "true"}, 
-                    files=files
-                ).json()
+#                 # is_preferred=true forces FB to set this specific upload as the cover
+#                 res = requests.post(
+#                     f"https://graph.facebook.com/v18.0/{video_id}/thumbnails", 
+#                     data={"access_token": token, "is_preferred": "true"}, 
+#                     files=files
+#                 ).json()
                 
-            if res.get('success'):
-                print("  [✅] Video Thumbnail (Cover Photo) Updated Successfully!")
-            else:
-                print(f"  [❌] Thumbnail update failed: {res}")
-        else:
-            print("  [⚠️] Koi Video attach nahi mili (Yeh shayad text/photo post hai).")
+#             if res.get('success'):
+#                 print("  [✅] Video Thumbnail (Cover Photo) Updated Successfully!")
+#             else:
+#                 print(f"  [❌] Thumbnail update failed: {res}")
+#         else:
+#             print("  [⚠️] Koi Video attach nahi mili (Yeh shayad text/photo post hai).")
             
-    except Exception as e:
-        print(f"  [❌] Crash while updating thumbnail: {e}")
+#     except Exception as e:
+#         print(f"  [❌] Crash while updating thumbnail: {e}")
 
 def check_and_comment(token):
     page_id, page_name = get_page_info(token)
