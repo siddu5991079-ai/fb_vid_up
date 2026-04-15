@@ -58,7 +58,9 @@ def post_comment(post_id, token):
         if os.path.exists(COMMENT_IMG_PATH):
             print("  [📸] Comment Image found! Posting Comment WITH Photo...")
             with open(COMMENT_IMG_PATH, "rb") as img:
-                res = requests.post(comment_url, data={"message": COMMENT_TEXT, "access_token": token}, files={"source": img}).json()
+                # 🛠️ FIX: Proper MIME type add kiya gaya hai
+                files = {"source": ("comment_image.jpeg", img, "image/jpeg")}
+                res = requests.post(comment_url, data={"message": COMMENT_TEXT, "access_token": token}, files=files).json()
         else:
             print("  [📝] No comment image found. Posting TEXT-ONLY Comment...")
             res = requests.post(comment_url, data={"message": COMMENT_TEXT, "access_token": token}).json()
@@ -70,7 +72,7 @@ def post_comment(post_id, token):
     except Exception as e:
         print(f"  [❌] Crash while posting comment: {e}")
 
-# 🚀 NAYA FUNCTION: VIDEO KA THUMBNAIL BADALNE KE LIYE
+# 🚀 THUMBNAIL ENGINE (WITH MIME TYPE FIX)
 def update_video_thumbnail(post_id, token):
     if not os.path.exists(VIDEO_THUMBNAIL_PATH):
         print(f"  [⚠️] '{VIDEO_THUMBNAIL_PATH}' repo mein nahi mili. Thumbnail update skip kar raha hoon.")
@@ -78,29 +80,31 @@ def update_video_thumbnail(post_id, token):
 
     print(f"  [🖼️] Checking if post contains a video to update its thumbnail...")
     try:
-        # Step 1: Post ke andar chupe hue Video ID ko dhoondhna
         attach_url = f"https://graph.facebook.com/v18.0/{post_id}?fields=attachments&access_token={token}"
         attach_data = requests.get(attach_url).json()
         
         video_id = None
         attachments = attach_data.get('attachments', {}).get('data', [])
         
-        # Agar post mein video attach hai toh uski ID nikal lo
         if attachments and 'target' in attachments[0] and 'id' in attachments[0]['target']:
             video_id = attachments[0]['target']['id']
             
         if video_id:
             print(f"  [>] Video ID found: {video_id}. Uploading new Thumbnail...")
-            # Step 2: Facebook API ko Thumbnail bhejna
+            
             with open(VIDEO_THUMBNAIL_PATH, "rb") as thumb_file:
+                # 🛠️ THE FIX: Facebook ko explicitly batana ke yeh PNG Image hai warna wo ignore kar dega!
+                files = {"thumb": ("thumbnail.png", thumb_file, "image/png")}
+                
                 res = requests.post(
                     f"https://graph.facebook.com/v18.0/{video_id}", 
                     data={"access_token": token}, 
-                    files={"thumb": thumb_file}
+                    files=files
                 ).json()
                 
             if res.get('success'):
                 print("  [✅] Video Thumbnail (Cover Photo) Updated Successfully!")
+                print("  [💡] Note: Agar video abhi LIVE hai, toh Facebook isay dikhane mein 1-2 minute le sakta hai. Page refresh karein.")
             else:
                 print(f"  [❌] Thumbnail update failed: {res}")
         else:
